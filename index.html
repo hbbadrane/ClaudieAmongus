@@ -283,7 +283,14 @@ function joinGame(){
   const name=document.getElementById('join-name').value.trim();
   if(!name){toast("Entre ton nom!");return;}
   myName=name;myColor=parseInt(document.getElementById('join-color').value);myId=gId();
-  pRef.child(myId).set({name:myName,color:myColor,role:null,alive:true,rd:false,tasks:{},lat:RES_LAT,lng:RES_LNG});
+  stRef.once('value',snap=>{
+  const st=snap.val();
+  if(st&&st.winner){
+    stRef.set({status:'lobby',winner:null,meeting:null,sabotage:null});
+    pRef.remove();
+  }
+});
+pRef.child(myId).set({name:myName,color:myColor,role:null,alive:true,rd:false,tasks:{},lat:RES_LAT,lng:RES_LNG});
   pRef.child(myId).onDisconnect().remove();
   document.getElementById('wait-name').textContent=myName;
   document.getElementById('wait-dot').style.background=COLORS[myColor];
@@ -299,6 +306,7 @@ function openHost(){
   myName=hostName.trim();
   myColor=0;
   myId=gId();
+  stRef.once('value',snap=>{const st=snap.val();if(st&&st.winner){stRef.set({status:'lobby',winner:null,meeting:null,sabotage:null});pRef.remove();}});
   pRef.child(myId).set({
     name:myName,color:myColor,role:null,
     alive:true,rd:false,tasks:{},
