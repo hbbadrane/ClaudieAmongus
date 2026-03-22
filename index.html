@@ -576,10 +576,14 @@ function confirmKill(tid){
   startKillCd();
   setTimeout(()=>{
     pRef.once('value',snap=>{
-      const all=Object.values(snap.val()||{}).filter(p=>!p.name||p.name!=='Hote');
+      const all=Object.values(snap.val()||{});
       const ai=all.filter(p=>p.role==='impostor'&&p.alive).length;
       const ac=all.filter(p=>p.role==='crewmate'&&p.alive).length;
-      if(isHost&&ai>=ac)stRef.child('winner').set('impostors');
+      if(ai===0){
+        stRef.child('winner').set('crewmates_vote');
+      } else if(ai>=ac){
+        stRef.child('winner').set('impostors');
+      }
     });
   },500);
 }
