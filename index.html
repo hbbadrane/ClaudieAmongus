@@ -350,6 +350,13 @@ function startGame(){
     pRef.set(upd);
     stRef.set({status:'playing',startTime:Date.now(),duration:dur*60,
       sabotage:null,meeting:null,winner:null});
+    // Host gets his role immediately
+    const myData=upd[myId];
+    if(myData){
+      myRole=myData.role;
+      myTasks=myData.tasks||{};
+      showRoleReveal();
+    }
     toast("Partie lancée! Rôles assignés.","#27ae60");
   });
 }
@@ -686,6 +693,7 @@ function endVote(){
     if(skipV>=max)ejected=null;
     stRef.child('meeting').set({active:false,voteOn:false});
     vRef.remove();myVote=null;meetingUp=false;
+    hideFS();
     if(ejected){
       const t=players.find(p=>p.id===ejected);
       if(t){
