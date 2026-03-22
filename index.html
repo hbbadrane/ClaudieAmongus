@@ -226,7 +226,7 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     <h1 style="font-size:2.2rem;font-weight:bold;margin:8px 0" id="win-title"></h1>
     <p style="color:#aaa;font-size:1rem;margin-bottom:25px" id="win-sub"></p>
     <div class="card" id="win-reveal"></div>
-    <button class="btn btn-blue" style="margin-top:20px" onclick="location.reload()">🔄 Rejouer</button>
+    <button class="btn btn-blue" style="margin-top:20px" onclick="resetGame()">🔄 Nouvelle partie</button>
   </div>
 </div>
 <script>
@@ -752,12 +752,19 @@ function addChat(data){
 }
 
 function showWinner(winner){
-  clearInterval(gameInt);hideFS();
+  clearInterval(gameInt);
+  clearInterval(voteInt);
+  clearInterval(sabInt);
+  clearInterval(killInt);
+  hideFS();
   const cw=winner.startsWith('crewmates');
   document.getElementById('win-icon').textContent=cw?'👨‍🚀':'🔪';
   document.getElementById('win-title').textContent=cw?'ÉQUIPIERS GAGNENT!':'IMPOSTEURS GAGNENT!';
   document.getElementById('win-title').style.color=cw?'#3498db':'#e74c3c';
-  document.getElementById('win-sub').textContent=winner==='crewmates_tasks'?'🎉 Toutes les missions complétées!':winner==='crewmates_vote'?'✅ Tous les imposteurs expulsés!':winner==='impostors_timeout'?'⏰ Temps écoulé!':'😈 Les imposteurs ont pris le contrôle!';
+  document.getElementById('win-sub').textContent=
+    winner==='crewmates_tasks'?'🎉 Toutes les missions complétées!':
+    winner==='crewmates_vote'?'✅ Tous les imposteurs expulsés!':
+    winner==='impostors_timeout'?'⏰ Temps écoulé!':'😈 Les imposteurs ont pris le contrôle!';
   document.getElementById('win-reveal').innerHTML=
     '<p style="color:#aaa;font-weight:bold;margin-bottom:12px">🔪 Les imposteurs étaient:</p>'+
     players.filter(p=>p.role==='impostor').map(p=>'<div class="player-row" style="background:#1a0505;border:1px solid #c0392b"><div class="dot" style="background:'+COLORS[p.color]+'"></div><span style="color:#e74c3c;font-weight:bold">'+p.name+' 🔪</span></div>').join('')+
@@ -823,6 +830,24 @@ function swVTab(tab){
   document.getElementById('vtab-v').classList.toggle('active',tab==='v');
   document.getElementById('vtab-c').classList.toggle('active',tab==='c');
 }
+
+function resetGame(){
+  stRef.set({status:'lobby',winner:null,meeting:null,sabotage:null});
+  pRef.remove();
+  clearInterval(gameInt);
+  clearInterval(voteInt);
+  clearInterval(sabInt);
+  clearInterval(killInt);
+  myId=null;myName="";myColor=0;myRole=null;myTasks={};
+  isDead=false;isHost=false;myVote=null;curTab="tasks";
+  gameInt=null;sabInt=null;killInt=null;voteInt=null;
+  killCd=0;players=[];map=null;markers={};inCam=false;meetingUp=false;
+  hideFS();
+  document.getElementById('dead-overlay').style.display='none';
+  showScreen('screen-join');
+  toast("Prêt pour une nouvelle partie 🎮","#27ae60");
+}
+</script>
 </script>
 </body>
 </html>
