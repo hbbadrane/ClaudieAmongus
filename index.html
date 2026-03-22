@@ -794,9 +794,16 @@ function updateMarkers(){
     if(!p.lat||!p.lng)return;
     const see=inCam||myRole==='impostor'||myRole==='host'||p.id===myId;
     if(!see){if(markers[p.id]){map.removeLayer(markers[p.id]);delete markers[p.id];}return;}
-    const icon=L.divIcon({html:'<div style="width:22px;height:22px;border-radius:50%;background:'+COLORS[p.color]+';border:2px solid white;opacity:'+(p.alive?1:0.4)+';display:flex;align-items:center;justify-content:center;font-size:10px;color:white;font-weight:bold">'+p.name.charAt(0)+'</div>',className:'',iconSize:[22,22]});
+    if(!p.alive){if(markers[p.id]){map.removeLayer(markers[p.id]);delete markers[p.id];}return;}
+    const icon=L.divIcon({
+      html:'<div style="width:28px;height:28px;border-radius:50%;background:'+COLORS[p.color]+';border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;font-weight:bold">'+p.name.charAt(0).toUpperCase()+'</div>',
+      className:'',iconSize:[28,28]
+    });
     if(markers[p.id]){markers[p.id].setLatLng([p.lat,p.lng]);markers[p.id].setIcon(icon);}
-    else{markers[p.id]=L.marker([p.lat,p.lng],{icon}).bindPopup('<b>'+p.name+'</b>'+(p.alive?'':' (Mort)')).addTo(map);}
+    else{markers[p.id]=L.marker([p.lat,p.lng],{icon}).bindPopup('<b>'+p.name+'</b>').addTo(map);}
+  });
+  Object.keys(markers).forEach(id=>{
+    if(!players.find(p=>p.id===id)){map.removeLayer(markers[id]);delete markers[id];}
   });
 }
 
