@@ -757,6 +757,7 @@ function showWinner(winner){
   clearInterval(sabInt);
   clearInterval(killInt);
   hideFS();
+  document.getElementById('dead-overlay').style.display='none';
   const cw=winner.startsWith('crewmates');
   document.getElementById('win-icon').textContent=cw?'👨‍🚀':'🔪';
   document.getElementById('win-title').textContent=cw?'ÉQUIPIERS GAGNENT!':'IMPOSTEURS GAGNENT!';
