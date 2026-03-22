@@ -413,7 +413,9 @@ function listenGame(){
       }
     }
     if(st.meeting&&!st.meeting.active)meetingUp=false;
-    if(st.winner)showWinner(st.winner);
+    if(st.winner&&!document.getElementById('screen-winner').classList.contains('active')){
+  showWinner(st.winner);
+}
   });
   vRef.on('value',snap=>{updateVoteUI(snap.val()||{});});
   cRef.on('child_added',snap=>{addChat(snap.val());});
