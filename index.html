@@ -295,11 +295,15 @@ function joinGame(){
 function openHost(){
   isHost=true;
   const hostName=prompt("Entre ton nom de joueur:");
-  if(!hostName){toast("Entre ton nom!");return;}
-  myName=hostName;
-  myColor=parseInt(prompt("Choisis ta couleur (0=Rouge, 1=Bleu, 2=Vert, 3=Rose, 4=Orange)")||"0");
+  if(!hostName||!hostName.trim()){toast("Entre ton nom!");return;}
+  myName=hostName.trim();
+  myColor=0;
   myId=gId();
-  pRef.child(myId).set({name:myName,color:myColor,role:null,alive:true,rd:false,tasks:{},lat:RES_LAT,lng:RES_LNG});
+  pRef.child(myId).set({
+    name:myName,color:myColor,role:null,
+    alive:true,rd:false,tasks:{},
+    lat:RES_LAT,lng:RES_LNG
+  });
   pRef.child(myId).onDisconnect().remove();
   document.getElementById('game-link').textContent=window.location.href;
   showScreen('screen-host');
@@ -331,10 +335,13 @@ function startGame(){
       const role=impIds.has(id)?'impostor':'crewmate';
       const tIds=[...TASKS].sort(()=>Math.random()-0.5).slice(0,2).map(t=>t.id);
       const tObj={};tIds.forEach(tid=>tObj[tid]=false);
-      upd[id]={name:p.name,color:p.color,role,alive:true,rd:false,tasks:role==='crewmate'?tObj:{},lat:p.lat||RES_LAT,lng:p.lng||RES_LNG};
+      upd[id]={name:p.name,color:p.color,role,alive:true,rd:false,
+        tasks:role==='crewmate'?tObj:{},
+        lat:p.lat||RES_LAT,lng:p.lng||RES_LNG};
     });
     pRef.set(upd);
-    stRef.set({status:'playing',startTime:Date.now(),duration:dur*60,sabotage:null,meeting:null,winner:null});
+    stRef.set({status:'playing',startTime:Date.now(),duration:dur*60,
+      sabotage:null,meeting:null,winner:null});
     toast("Partie lancée! Rôles assignés.","#27ae60");
   });
 }
@@ -648,17 +655,26 @@ function updateVoteUI(votes){
     const p=players.find(x=>x.id===id);
     return'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e2d3d;font-size:0.85rem"><span>'+(id==='skip'?'⏭ Passer':(p?p.name:id))+'</span><span style="color:#f39c12;font-weight:bold">'+c+'×</span></div>';
   }).join('');
-  if(total>=alive){clearInterval(voteInt);setTimeout(endVote,1000);}
+  if(total>=alive&&alive>0){
+    clearInterval(voteInt);
+    setTimeout(endVote,1500);
+  }
 }
 
 function endVote(){
   clearInterval(voteInt);
   vRef.once('value',snap=>{
-    const votes=snap.val()||{},tally={};
-    Object.values(votes).forEach(v=>tally[v]=(tally[v]||0)+1);
+    const votes=snap.val()||{};
+    const tally={};
+    Object.values(votes).forEach(v=>{
+      const target=typeof v==='object'?v.target:v;
+      tally[target]=(tally[target]||0)+1;
+    });
     const skipV=tally['skip']||0;
     let ejected=null,max=0;
-    Object.entries(tally).forEach(([id,c])=>{if(id!=='skip'&&c>max){max=c;ejected=id;}});
+    Object.entries(tally).forEach(([id,c])=>{
+      if(id!=='skip'&&c>max){max=c;ejected=id;}
+    });
     if(skipV>=max)ejected=null;
     stRef.child('meeting').set({active:false,voteOn:false});
     vRef.remove();myVote=null;meetingUp=false;
@@ -669,14 +685,19 @@ function endVote(){
         showEject(t);
         setTimeout(()=>{
           pRef.once('value',snap2=>{
-            const all=Object.values(snap2.val()||{}).filter(p=>!p.name||p.name!=='Hote');
+            const all=Object.values(snap2.val()||{});
             const ai=all.filter(p=>p.role==='impostor'&&p.alive).length;
             const ac=all.filter(p=>p.role==='crewmate'&&p.alive).length;
-            if(isHost){if(ai===0)stRef.child('winner').set('crewmates_vote');else if(ai>=ac)stRef.child('winner').set('impostors');}
+            if(isHost){
+              if(ai===0)stRef.child('winner').set('crewmates_vote');
+              else if(ai>=ac)stRef.child('winner').set('impostors');
+            }
           });
         },300);
       }
-    } else showEject(null);
+    } else {
+      showEject(null);
+    }
   });
 }
 
