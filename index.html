@@ -295,7 +295,8 @@ function joinGame(){
 function openHost(){
   isHost=true;
   myId='host_'+gId();
-  myName='Hote';
+  const hostName=prompt("Entre ton nom de joueur:");
+myName=hostName||'Hote';
   myColor=0;
   document.getElementById('game-link').textContent=window.location.href;
   showScreen('screen-host');
@@ -315,7 +316,7 @@ function openHost(){
 function startGame(){
   pRef.once('value',snap=>{
     const all=snap.val()||{};
-    const ids=Object.keys(all).filter(id=>!id.startsWith('host_'));
+    const ids=Object.keys(all);
     if(ids.length<1){toast("Minimum 1 joueur connecté!");return;}
     const ic=Math.min(parseInt(document.getElementById('imp-count').value),Math.max(1,Math.floor(ids.length/2)));
     const dur=parseInt(document.getElementById('duration').value);
@@ -643,6 +644,7 @@ function updateVoteUI(votes){
     const p=players.find(x=>x.id===id);
     return'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e2d3d;font-size:0.85rem"><span>'+(id==='skip'?'⏭ Passer':(p?p.name:id))+'</span><span style="color:#f39c12;font-weight:bold">'+c+'×</span></div>';
   }).join('');
+  if(total>=alive){clearInterval(voteInt);endVote();}
 }
 
 function endVote(){
