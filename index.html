@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Among Us IRL 🚀</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#0d1117;color:#fff;min-height:100vh}
+.screen{display:none;flex-direction:column;align-items:center;padding:20px;min-height:100vh;max-width:400px;margin:0 auto}
+.screen.active{display:flex}
+.btn{width:100%;padding:14px;margin:5px 0;border:none;border-radius:12px;font-size:1rem;font-weight:bold;cursor:pointer;transition:all 0.2s}
+.btn-blue{background:#2980b9;color:#fff}
+.btn-green{background:#27ae60;color:#fff}
+.btn-red{background:#e74c3c;color:#fff}
+.btn-orange{background:#e67e22;color:#000}
+.btn-gray{background:#34495e;color:#fff}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.card{background:#1a2332;border-radius:16px;padding:20px;width:100%;margin:8px 0;border:1px solid #2c3e50}
+input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px solid #34495e;background:#1a2332;color:#fff;font-size:1rem;outline:none}
+.tab-bar{display:flex;width:100%;background:#1a2332;border-radius:12px;padding:4px;margin:8px 0}
+.tab{flex:1;padding:8px 2px;text-align:center;border-radius:8px;cursor:pointer;font-size:0.75rem;color:#888;transition:all 0.2s}
+.tab.active{background:#2980b9;color:#fff;font-weight:bold}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#e74c3c;color:#fff;padding:12px 22px;border-radius:12px;font-weight:bold;z-index:9999;font-size:0.9rem;box-shadow:0 4px 20px rgba(0,0,0,0.5);display:none;white-space:nowrap}
+.player-row{display:flex;align-items:center;padding:10px 12px;background:#1e2d3d;border-radius:10px;margin:4px 0}
+.dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-right:10px}
+.task-item{background:#1e2d3d;border-radius:12px;padding:14px;margin:6px 0;display:flex;gap:12px;align-items:flex-start;border:1px solid #2c3e50;transition:all 0.2s}
+.task-item.done{opacity:0.55;border-color:#27ae60;background:#0d1a0d}
+.task-check{width:24px;height:24px;border-radius:50%;border:2px solid #2980b9;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-size:0.85rem;cursor:pointer}
+.task-check.done{background:#27ae60;border-color:#27ae60;cursor:default}
+.progress-bar{background:#1e2d3d;border-radius:6px;height:8px;overflow:hidden;width:100%;margin:4px 0}
+.progress-fill{height:100%;background:linear-gradient(90deg,#27ae60,#2ecc71);transition:width 0.5s}
+.sab-banner{background:#1a0505;border:2px solid #e74c3c;border-radius:12px;padding:14px;text-align:center;width:100%;margin-bottom:8px;display:none}
+.fs{position:fixed;inset:0;z-index:800;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;background:#0d1117;overflow-y:auto}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:700;display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:0.7rem;font-weight:bold}
+.chat-box{background:#0a0f1a;border:1px solid #1e2d3d;border-radius:12px;padding:12px;height:200px;overflow-y:auto;margin-bottom:10px}
+.chat-msg{padding:6px 0;border-bottom:1px solid #111827;font-size:0.87rem}
+.vote-row{background:#1e2d3d;border-radius:10px;padding:12px 14px;margin:5px 0;display:flex;align-items:center;justify-content:space-between;border:1px solid #2c3e50}
+#map{height:320px;width:100%;border-radius:12px;border:2px solid #2c3e50;margin:8px 0}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="dead-overlay">
+  <div style="font-size:5rem">💀</div>
+  <h2 style="color:#e74c3c;margin:15px 0">Tu as été éliminé!</h2>
+  <p style="color:#aaa;margin-bottom:24px;line-height:1.7">Tu es maintenant un fantôme.</p>
+  <button class="btn btn-gray" onclick="document.getElementById('dead-overlay').style.display='none'">Continuer comme Fantôme 👻</button>
+</div>
+
+<div class="fs" id="fs-alert">
+  <div style="font-size:5rem;margin-bottom:10px;animation:pulse 1s infinite" id="fs-alert-icon">🚨</div>
+  <h1 style="color:#e74c3c;font-size:2rem;margin-bottom:10px;animation:blink 1s infinite">RÉUNION D'URGENCE!</h1>
+  <p style="color:#ffaaaa;font-size:0.95rem;margin-bottom:20px" id="fs-alert-reason"></p>
+  <div style="background:#1a0a00;border:3px solid #f39c12;border-radius:20px;padding:20px 25px;margin-bottom:20px;animation:pulse 2s infinite">
+    <p style="color:#f39c12;font-size:1.4rem;font-weight:bold">🍳 Allez dans la</p>
+    <p style="color:#fff;font-size:2rem;font-weight:bold;margin-top:4px">CUISINE BAT G</p>
+    <p style="color:#f39c12;font-size:1.1rem;margin-top:6px">pour le Vote!</p>
+  </div>
+  <div id="fs-host-btn" style="display:none;width:100%;max-width:320px">
+    <p style="color:#7f8c8d;font-size:0.82rem;margin-bottom:8px">Tu es l'hôte — lance le vote quand tout le monde est arrivé</p>
+    <button class="btn btn-green" onclick="hostLaunchVote()">✅ Tout le monde est là — Lancer le Vote!</button>
+  </div>
+  <p id="fs-wait-msg" style="color:#7f8c8d;font-size:0.85rem;display:none">En attente que l'hôte lance le vote...</p>
+</div>
+
+<div class="fs" id="fs-vote" style="justify-content:flex-start;padding-top:15px">
+  <div style="width:100%;max-width:380px">
+    <div style="text-align:center;margin-bottom:10px">
+      <h2 style="color:#e74c3c;font-size:1.4rem;margin-bottom:4px">🗳️ VOTE EN COURS</h2>
+      <p style="color:#ffaaaa;font-size:0.8rem;margin-bottom:8px" id="fs-vote-reason"></p>
+      <div id="fs-vote-timer" style="font-size:3.5rem;font-weight:bold;color:#f39c12">5:00</div>
+      <p style="color:#aaa;font-size:0.72rem">Votez avant la fin du timer!</p>
+    </div>
+    <div class="tab-bar">
+      <div class="tab active" id="vtab-v" onclick="swVTab('v')">🗳️ Vote</div>
+      <div class="tab" id="vtab-c" onclick="swVTab('c')">💬 Chat</div>
+    </div>
+    <div id="vc-v">
+      <p style="color:#888;font-size:0.8rem;text-align:center;margin-bottom:8px">Qui est l'imposteur?</p>
+      <div id="vote-list"></div>
+      <button class="btn btn-gray" id="skip-btn" onclick="castVote('skip')" style="margin-top:6px">⏭ Passer mon vote</button>
+      <div class="card" style="margin-top:8px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="color:#aaa;font-size:0.82rem;font-weight:bold">Votes en direct</span>
+          <span style="color:#f39c12;font-size:0.82rem" id="vote-count">0/0</span>
+        </div>
+        <div id="vote-results"></div>
+      </div>
+    </div>
+    <div id="vc-c" style="display:none">
+      <div class="chat-box" id="chat-box"></div>
+      <div style="display:flex;gap:8px">
+        <input id="chat-input" placeholder="Discutez..." maxlength="120" onkeydown="if(event.key==='Enter')sendChat()" style="flex:1;margin:0"/>
+        <button onclick="sendChat()" style="padding:12px 16px;background:#2980b9;border:none;border-radius:10px;color:#fff;font-weight:bold;cursor:pointer">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fs" id="fs-eject">
+  <div style="font-size:5rem;margin-bottom:15px" id="ej-icon"></div>
+  <h2 style="font-size:2rem;font-weight:bold;margin-bottom:10px" id="ej-name"></h2>
+  <p style="font-size:1.1rem;margin-bottom:8px" id="ej-role"></p>
+  <p style="color:#7f8c8d;margin-bottom:25px" id="ej-rem"></p>
+  <div style="background:#1a2332;border-radius:16px;padding:20px 30px;text-align:center;border:1px solid #2c3e50">
+    <p style="color:#aaa;margin-bottom:8px">La partie reprend dans...</p>
+    <div style="font-size:3rem;font-weight:bold;color:#f39c12" id="ej-cd">5</div>
+  </div>
+</div>
+
+<div class="screen active" id="screen-join">
+  <div style="text-align:center;margin-top:40px;margin-bottom:15px">
+    <div style="font-size:3.5rem">🚀</div>
+    <h1 style="color:#e74c3c;font-size:2rem;margin:6px 0;text-shadow:0 0 20px #e74c3c55">Among Us IRL</h1>
+    <p style="color:#7f8c8d;font-size:0.85rem">Claudie Haignerie • Lyon 8 🇫🇷</p>
+  </div>
+  <div class="card">
+    <p style="color:#aaa;font-size:0.85rem;margin-bottom:4px">Ton nom</p>
+    <input id="join-name" placeholder="Entre ton nom..." maxlength="16"/>
+    <p style="color:#aaa;font-size:0.85rem;margin:8px 0 4px">Ta couleur</p>
+    <select id="join-color">
+      <option value="0">🔴 Rouge</option><option value="1">🔵 Bleu</option>
+      <option value="2">🟢 Vert</option><option value="3">🩷 Rose</option>
+      <option value="4">🟠 Orange</option><option value="5">🟡 Jaune</option>
+      <option value="6">⚫ Noir</option><option value="7">⚪ Blanc</option>
+      <option value="8">🟣 Violet</option><option value="9">🟤 Marron</option>
+      <option value="10">🩵 Cyan</option><option value="11">🟩 Lime</option>
+    </select>
+    <button class="btn btn-blue" onclick="joinGame()">🎮 Rejoindre la partie</button>
+  </div>
+  <div class="card" style="text-align:center">
+    <p style="color:#7f8c8d;font-size:0.85rem;margin-bottom:10px">Tu organises la partie?</p>
+    <button class="btn btn-orange" onclick="openHost()">👑 Mode Hôte</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-host">
+  <div style="text-align:center;margin:20px 0 10px">
+    <h2 style="color:#f39c12;font-size:1.5rem">👑 Configuration Hôte</h2>
+    <p style="color:#7f8c8d;font-size:0.82rem">Les joueurs rejoignent automatiquement</p>
+  </div>
+  <div class="card" style="text-align:center">
+    <p style="color:#aaa;font-size:0.85rem;margin-bottom:6px">📲 Envoie ce lien à tes amis:</p>
+    <p style="color:#f39c12;font-weight:bold;font-size:0.82rem;word-break:break-all" id="game-link"></p>
+    <p style="color:#7f8c8d;font-size:0.78rem;margin-top:6px">Ils entrent leur nom et appuient Rejoindre ✅</p>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="color:#aaa">Imposteurs</span>
+      <span style="color:#e74c3c;font-weight:bold" id="imp-display">2</span>
+    </div>
+    <input type="range" min="1" max="3" value="2" id="imp-count" oninput="document.getElementById('imp-display').textContent=this.value" style="accent-color:#e74c3c;margin-bottom:12px;width:100%">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="color:#aaa">Durée</span>
+      <span style="color:#f39c12;font-weight:bold" id="dur-display">30 min</span>
+    </div>
+    <input type="range" min="10" max="45" step="5" value="30" id="duration" oninput="document.getElementById('dur-display').textContent=this.value+' min'" style="accent-color:#f39c12;width:100%">
+  </div>
+  <div class="card" id="lobby-list">
+    <p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Joueurs connectés (0)</p>
+    <p style="color:#555;font-size:0.85rem;text-align:center">En attente de joueurs...</p>
+  </div>
+  <button class="btn btn-red" onclick="startGame()">🚀 Lancer la partie!</button>
+  <button class="btn btn-gray" onclick="showScreen('screen-join')">← Retour</button>
+</div>
+
+<div class="screen" id="screen-waiting">
+  <div style="text-align:center;margin-top:80px">
+    <div style="font-size:4rem;margin-bottom:15px">⏳</div>
+    <h2 style="color:#f39c12;margin-bottom:10px">En attente de l'hôte...</h2>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0">
+      <div class="dot" id="wait-dot"></div>
+      <span style="font-weight:bold;font-size:1.2rem" id="wait-name"></span>
+    </div>
+    <p style="color:#7f8c8d">L'hôte va lancer la partie! 📢</p>
+  </div>
+</div>
+
+<div class="screen" id="screen-role">
+  <div style="text-align:center;margin-top:30px;margin-bottom:15px">
+    <h2 style="color:#f39c12">Ton Rôle Secret</h2>
+  </div>
+  <div id="role-card" style="width:100%"></div>
+  <div class="card" style="text-align:center;margin-top:15px;border:2px solid #e74c3c">
+    <p style="color:#e74c3c;font-weight:bold;margin-bottom:6px">🤫 GARDE ÇA SECRET!</p>
+    <p style="color:#7f8c8d;font-size:0.82rem;margin-bottom:14px">Ne montre pas ton écran aux autres</p>
+    <button class="btn btn-green" onclick="goToGame()">✅ Compris — Jouer!</button>
+  </div>
+</div>
+
+<div class="screen" id="screen-game">
+  <div style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e2d3d;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="dot" id="game-dot"></div>
+      <span style="font-weight:bold;font-size:0.95rem" id="game-name"></span>
+      <span class="badge" id="game-badge"></span>
+    </div>
+    <span style="color:#f39c12;font-weight:bold" id="game-timer">30:00</span>
+  </div>
+  <div style="width:100%;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:0.75rem;color:#888">Tâches équipe</span>
+      <span style="font-size:0.75rem;color:#27ae60;font-weight:bold" id="tasks-prog">0/0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="tasks-bar" style="width:0%"></div></div>
+  </div>
+  <div class="sab-banner" id="sab-banner">
+    <p style="font-weight:bold;margin-bottom:4px" id="sab-name">⚠️ SABOTAGE</p>
+    <p style="color:#ffaaaa;font-size:0.82rem;margin-bottom:6px" id="sab-desc"></p>
+    <span style="font-size:1.8rem;font-weight:bold;color:#e74c3c" id="sab-timer"></span>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active" id="tab-tasks" onclick="swTab('tasks')">📋 Tâches</div>
+    <div class="tab" id="tab-players" onclick="swTab('players')">👥 Joueurs</div>
+    <div class="tab" id="tab-actions" onclick="swTab('actions')">⚡ Actions</div>
+    <div class="tab" id="tab-map" onclick="swTab('map')">🗺️ Map</div>
+  </div>
+  <div id="ct-tasks" style="width:100%"></div>
+  <div id="ct-players" style="width:100%;display:none"></div>
+  <div id="ct-actions" style="width:100%;display:none"></div>
+  <div id="ct-map" style="width:100%;display:none">
+    <div id="map"></div>
+    <div id="cam-status" style="text-align:center;padding:8px;font-size:0.82rem;color:#7f8c8d"></div>
+  </div>
+</div>
+
+<div class="screen" id="screen-winner">
+  <div style="text-align:center;padding-top:50px;width:100%">
+    <div style="font-size:7rem;margin-bottom:10px" id="win-icon"></div>
+    <h1 style="font-size:2.2rem;font-weight:bold;margin:8px 0" id="win-title"></h1>
+    <p style="color:#aaa;font-size:1rem;margin-bottom:25px" id="win-sub"></p>
+    <div class="card" id="win-reveal"></div>
+    <button class="btn btn-blue" style="margin-top:20px" onclick="location.reload()">🔄 Rejouer</button>
+  </div>
+</div>
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyCIFpnfWlNZ5ppnGdVJ0MPZJbdVMJyD2Js",
+  authDomain:"among-us-irl-ch.firebaseapp.com",
+  databaseURL:"https://among-us-irl-ch-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"among-us-irl-ch",
+  storageBucket:"among-us-irl-ch.firebasestorage.app",
+  messagingSenderId:"106754915763",
+  appId:"1:106754915763:web:11dbda9cb73806751d1fc6"
+};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+const COLORS=["#c51111","#132ed1","#117f2d","#ed54ba","#ef7d0e","#f5f557","#3f474e","#d6e0f0","#6b31bc","#71491e","#38fedc","#50ef39"];
+const TASKS=[
+  {id:"t1",name:"💧 Transfert Instable",location:"Cuisine",desc:"Transporte l'eau d'un gobelet à un autre avec une cuillère sans renverser. Tu as 3 tentatives!"},
+  {id:"t2",name:"🥄 Transport Sécurisé",location:"Couloir Principal",desc:"Amène une balle jusqu'à l'arrivée avec une cuillère sans la faire tomber. Demande le matériel à l'hôte!"},
+  {id:"t3",name:"🔍 Code Caché",location:"Salle Commune",desc:"Trouve les indices cachés dans la pièce et reconstitue le bon code. Montre le code à l'hôte pour valider!"},
+  {id:"t4",name:"🗺️ Parcours Codé",location:"Bâtiment",desc:"Suis les flèches dans le bâtiment jusqu'au point final pour récupérer le code. Montre le code à l'hôte!"},
+];
+const SABOTAGES=[
+  {id:"s1",name:"⚡ Coupure de Lumière",desc:"Tout le monde ferme les yeux et reste immobile 60 secondes!",duration:60},
+  {id:"s2",name:"📡 Comms Coupées",desc:"Interdiction de parler pendant 90 secondes — silence total!",duration:90},
+  {id:"s3",name:"🔒 Confinement",desc:"Tout le monde gèle et reste exactement là où il est pendant 2 minutes!",duration:120},
+  {id:"s4",name:"🚨 Fusion du Réacteur",desc:"Deux équipiers doivent rejoindre la Salle Commune en 3 minutes ou l'équipe perd!",duration:180},
+];
+const RES_LAT=45.7315666,RES_LNG=4.8806602;
+const CAM={lat:RES_LAT,lng:RES_LNG,r:15};
+const MAP_TASKS=[
+  {lat:RES_LAT+0.00012,lng:RES_LNG-0.00008,name:"💧 Cuisine"},
+  {lat:RES_LAT-0.00005,lng:RES_LNG+0.00010,name:"🥄 Couloir"},
+  {lat:RES_LAT-0.00008,lng:RES_LNG+0.00005,name:"🔍 Salle Commune"},
+  {lat:RES_LAT+0.00003,lng:RES_LNG-0.00015,name:"🗺️ Bâtiment"},
+];
+
+let myId=null,myName="",myColor=0,myRole=null,myTasks={};
+let isDead=false,isHost=false,myVote=null,curTab="tasks";
+let gameInt=null,sabInt=null,killInt=null,voteInt=null;
+let killCd=0,players=[];
+let map=null,markers={},inCam=false;
+let meetingUp=false;
+
+const pRef=db.ref("game/players");
+const stRef=db.ref("game/state");
+const vRef=db.ref("game/votes");
+const cRef=db.ref("game/chat");
+
+const gId=()=>Math.random().toString(36).substr(2,9);
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
+const getDist=(a,b,c,d)=>{const R=6371000,dL=(c-a)*Math.PI/180,dO=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));};
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showFS(id){['fs-alert','fs-vote','fs-eject'].forEach(s=>document.getElementById(s).style.display='none');document.getElementById(id).style.display='flex';}
+function hideFS(){['fs-alert','fs-vote','fs-eject'].forEach(s=>document.getElementById(s).style.display='none');}
+function toast(msg,bg){const t=document.getElementById('toast');t.textContent=msg;t.style.background=bg||'#e74c3c';t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3000);}
+
+function joinGame(){
+  const name=document.getElementById('join-name').value.trim();
+  if(!name){toast("Entre ton nom!");return;}
+  myName=name;myColor=parseInt(document.getElementById('join-color').value);myId=gId();
+  pRef.child(myId).set({name:myName,color:myColor,role:null,alive:true,rd:false,tasks:{},lat:RES_LAT,lng:RES_LNG});
+  pRef.child(myId).onDisconnect().remove();
+  document.getElementById('wait-name').textContent=myName;
+  document.getElementById('wait-dot').style.background=COLORS[myColor];
+  showScreen('screen-waiting');
+  listenGame();
+  toast("Bienvenue "+myName+"!","#27ae60");
+}
+
+function openHost(){
+  isHost=true;
+  if(!myId){myId='host_'+gId();myName='Hote';myColor=0;}
+  document.getElementById('game-link').textContent=window.location.href;
+  showScreen('screen-host');
+  listenGame();
+  pRef.on('value',snap=>{
+    const all=snap.val()||{};
+    const list=Object.values(all);
+    document.getElementById('lobby-list').innerHTML=
+      '<p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Joueurs connectes ('+list.length+')</p>'+
+      (list.length===0?'<p style="color:#555;font-size:0.85rem;text-align:center">En attente de joueurs...</p>':
+      list.map(p=>'<div class="player-row"><div class="dot" style="background:'+COLORS[p.color]+'"></div><span>'+p.name+'</span></div>').join(''));
+  });
+}
+
+function startGame(){
+  pRef.once('value',snap=>{
+    const all=snap.val()||{};
+    const ids=Object.keys(all);
+    if(ids.length<1){toast("Minimum 1 joueur connecte!");return;}
+    const ic=Math.min(parseInt(document.getElementById('imp-count').value),Math.max(1,Math.floor(ids.length/2)));
+    const dur=parseInt(document.getElementById('duration').value);
+    const sh=[...ids].sort(()=>Math.random()-0.5);
+    const impIds=new Set(sh.slice(0,ic));
+    const upd={};
+    ids.forEach(id=>{
+      const p=all[id];
+      const role=impIds.has(id)?'impostor':'crewmate';
+      const tIds=[...TASKS].sort(()=>Math.random()-0.5).slice(0,2).map(t=>t.id);
+      const tObj={};tIds.forEach(tid=>tObj[tid]=false);
+      upd[id]={name:p.name,color:p.color,role,alive:true,rd:false,tasks:role==='crewmate'?tObj:{},lat:p.lat||RES_LAT,lng:p.lng||RES_LNG};
+    });
+    pRef.set(upd);
+    stRef.set({status:'playing',startTime:Date.now(),duration:dur*60,sabotage:null,meeting:null,winner:null});
+    toast("Partie lancee! Roles assignes.","#27ae60");
+    const myData=upd[myId];
+    if(myData){myRole=myData.role;myTasks=myData.tasks||{};showRoleReveal();}
+    else{myRole='crewmate';myTasks={};showScreen('screen-game');initGame();}
+  });
+}
+
+function listenGame(){
+  if(!myId)return;
+  pRef.child(myId).on('value',snap=>{
+    const me=snap.val();if(!me)return;
+    if(me.role&&myRole!==me.role){
+      myRole=me.role;myTasks=me.tasks||{};
+      if(document.getElementById('screen-waiting').classList.contains('active')||
+         document.getElementById('screen-host').classList.contains('active'))showRoleReveal();
+    }
+    if(me.tasks)myTasks=me.tasks;
+    if(me.alive===false&&!isDead){isDead=true;document.getElementById('dead-overlay').style.display='flex';}
+  });
+  pRef.on('value',snap=>{
+    players=Object.entries(snap.val()||{}).map(([id,p])=>({...p,id}));
+    renderPlayersTab();updateProgress();
+    if(document.getElementById('screen-game').classList.contains('active'))renderTasksTab();
+    if(curTab==='map')updateMarkers();
+  });
+  stRef.on('value',snap=>{
+    const st=snap.val();if(!st)return;
+    if(st.status==='playing'&&!gameInt){
+      let rem=Math.max(0,st.duration-(Date.now()-st.startTime)/1000);
+      clearInterval(gameInt);
+      gameInt=setInterval(()=>{
+        rem--;
+        const el=document.getElementById('game-timer');
+        if(el)el.textContent=fmt(Math.max(0,rem));
+        if(rem<=0){clearInterval(gameInt);if(isHost)stRef.child('winner').set('impostors_timeout');}
+      },1000);
+    }
+    if(st.sabotage&&st.sabotage.active)showSab(st.sabotage);else hideSab();
+    if(st.meeting&&st.meeting.active){
+      if(!meetingUp){
+        meetingUp=true;
+        document.getElementById('fs-alert-icon').textContent=st.meeting.isBody?'💀':'📢';
+        document.getElementById('fs-alert-reason').textContent=st.meeting.reason;
+        document.getElementById('fs-host-btn').style.display=isHost?'block':'none';
+        document.getElementById('fs-wait-msg').style.display=isHost?'none':'block';
+        document.getElementById('fs-alert').style.display='flex';
+        document.getElementById('fs-vote').style.display='none';
+        document.getElementById('fs-eject').style.display='none';
+      }
+      if(st.meeting.voteOn&&document.getElementById('fs-vote').style.display!=='flex'){
+        document.getElementById('fs-vote-reason').textContent=st.meeting.reason;
+        document.getElementById('fs-alert').style.display='none';
+        document.getElementById('fs-vote').style.display='flex';
+        document.getElementById('fs-eject').style.display='none';
+        renderVoteList();startVoteTimer();
+      }
+    }
+    if(st.meeting&&!st.meeting.active)meetingUp=false;
+    if(st.winner)showWinner(st.winner);
+  });
+  vRef.on('value',snap=>{updateVoteUI(snap.val()||{});});
+  cRef.on('child_added',snap=>{addChat(snap.val());});
+}
+
+function showRoleReveal(){
+  const imp=myRole==='impostor';
+  document.getElementById('role-card').innerHTML=
+    '<div style="text-align:center;padding:35px 25px;border-radius:24px;background:'+(imp?'linear-gradient(135deg,#3a0a0a,#922b21)':'linear-gradient(135deg,#0a1a3a,#1a5276)')+';border:3px solid '+(imp?'#e74c3c':'#2980b9')+'">'+
+    '<div style="font-size:6rem;margin-bottom:8px">'+(imp?'🔪':'👨‍🚀')+'</div>'+
+    '<div style="font-size:2.2rem;font-weight:bold;color:'+(imp?'#e74c3c':'#3498db')+';margin-bottom:12px">'+(imp?'IMPOSTEUR':'ÉQUIPIER')+'</div>'+
+    '<p style="color:'+(imp?'#ffaaaa':'#aaddff')+';font-size:0.9rem;line-height:1.6">'+(imp?'Élimine les équipiers et sabote!':'Complète tes missions et vote les imposteurs!')+'</p></div>';
+  showScreen('screen-role');
+}
+
+function goToGame(){
+  if(!myRole){toast("Attends le début...");return;}
+  showScreen('screen-game');initGame();
+}
+
+function initGame(){
+  document.getElementById('game-name').textContent=myName;
+  document.getElementById('game-dot').style.background=COLORS[myColor];
+  const b=document.getElementById('game-badge');
+  b.textContent=myRole==='impostor'?'IMPOSTEUR':'ÉQUIPIER';
+  b.style.background=myRole==='impostor'?'#c0392b':'#2980b9';
+  renderTasksTab();renderActionsTab();
+  if(myRole==='impostor')startKillCd();
+  startGPS();
+}
+
+function renderTasksTab(){
+  const el=document.getElementById('ct-tasks');
+  let html='';
+  if(myRole==='impostor'){
+    html='<div class="card" style="text-align:center;background:linear-gradient(135deg,#2a0505,#1a0a0a);border:2px solid #922b21"><div style="font-size:2.5rem;margin-bottom:8px">🔪</div><p style="color:#e74c3c;font-weight:bold">Tu es l\'IMPOSTEUR</p><p style="color:#888;font-size:0.82rem;margin-top:6px">Fais semblant de faire des missions 🎭</p></div>';
+  } else {
+    const keys=Object.keys(myTasks);
+    if(keys.length===0){html='<div class="card" style="text-align:center"><p style="color:#aaa">Chargement des missions...</p></div>';}
+    else{keys.forEach(tid=>{
+      const t=TASKS.find(x=>x.id===tid);if(!t)return;
+      const done=myTasks[tid];
+      html+='<div class="task-item'+(done?' done':'')+'"><div class="task-check'+(done?' done':'')+'" onclick="'+(done?'':'doTask(\''+tid+'\')')+'">'+(done?'✓':'')+'</div>'+
+        '<div style="flex:1"><div style="font-weight:bold;font-size:0.95rem;margin-bottom:4px">'+t.name+'</div>'+
+        '<div style="color:#7f8c8d;font-size:0.75rem;margin-bottom:6px">📍 '+t.location+'</div>'+
+        '<div style="color:#aaa;font-size:0.78rem;line-height:1.5;background:#0d1117;padding:8px;border-radius:8px">'+t.desc+'</div>'+
+        (!done?'<div style="color:#2980b9;font-size:0.72rem;margin-top:6px">👆 Appuie quand validé par l\'hôte</div>':'<div style="color:#27ae60;font-size:0.72rem;margin-top:6px">✅ Mission accomplie!</div>')+
+        '</div></div>';
+    });}
+  }
+  html+='<div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">'+
+    '<button class="btn btn-red" onclick="reportBody()">🚨 Signaler un Corps</button>'+
+    '<button class="btn btn-orange" onclick="callMeeting()">📢 Réunion d\'Urgence</button></div>';
+  el.innerHTML=html;
+}
+
+function renderActionsTab(){
+  const el=document.getElementById('ct-actions');
+  if(myRole==='impostor'&&!isDead){
+    let html='<p style="color:#e74c3c;font-weight:bold;margin-bottom:10px">💣 SABOTAGES</p>';
+    SABOTAGES.forEach(s=>{html+='<button class="btn btn-red" id="sab-'+s.id+'" onclick="doSab(\''+s.id+'\')" style="text-align:left;margin-bottom:6px;border:1px solid #c0392b"><div>'+s.name+'</div><div style="font-size:0.75rem;font-weight:normal;color:#ffaaaa;margin-top:2px">'+s.desc.slice(0,50)+'...</div></button>';});
+    html+='<div class="card" style="text-align:center;margin-top:12px;border:1px solid #922b21">'+
+      '<p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Kill cooldown: <b id="kcd" style="color:#27ae60">PRÊT 🔪</b></p>'+
+      '<button class="btn btn-red" id="kill-btn" onclick="doKill()">🔪 Choisir un joueur à éliminer</button>'+
+      '<p style="color:#555;font-size:0.72rem;margin-top:6px">Approche-toi physiquement avant!</p></div>';
+    el.innerHTML=html;
+  } else {
+    el.innerHTML='<div class="card" style="text-align:center"><div style="font-size:3rem;margin-bottom:10px">👨‍🚀</div><p style="color:#aaa">Pas d\'actions spéciales pour les équipiers.</p></div>';
+  }
+}
+
+function renderPlayersTab(){
+  const el=document.getElementById('ct-players');if(!el)return;
+  const getA=p=>{if(myRole==='impostor')return p.alive;if(p.id===myId)return p.alive;return p.rd?false:true;};
+  const alive=players.filter(p=>getA(p)).length;
+  const dead=players.filter(p=>!getA(p)).length;
+  let html='<div style="display:flex;justify-content:center;gap:20px;margin-bottom:12px"><span style="color:#27ae60;font-size:0.85rem">✅ '+alive+' en vie</span><span style="color:#e74c3c;font-size:0.85rem">💀 '+dead+' mort'+(dead>1?'s':'')+'</span></div>';
+  players.forEach(p=>{
+    const a=getA(p),isMe=p.id===myId;
+    const td=Object.values(p.tasks||{}).filter(Boolean).length;
+    const tt=Object.keys(p.tasks||{}).length;
+    html+='<div class="player-row" style="opacity:'+(a?1:0.45)+'"><div class="dot" style="background:'+COLORS[p.color]+'"></div>'+
+      '<span style="flex:1;text-decoration:'+(a?'none':'line-through')+';color:'+(a?'#fff':'#666')+'">'+p.name+(isMe?' (Toi)':'')+(a?'':' 💀')+'</span>'+
+      (myRole==='impostor'&&p.role==='impostor'&&!isMe?'<span style="color:#e74c3c;font-size:0.75rem">🔪</span>':'')+
+      '<span style="color:#555;font-size:0.72rem;margin-left:8px">'+td+'/'+tt+'</span></div>';
+  });
+  el.innerHTML=html;
+}
+
+function updateProgress(){
+  const crew=players.filter(p=>p.role==='crewmate');
+  const total=crew.reduce((a,p)=>a+Object.keys(p.tasks||{}).length,0);
+  const done=crew.reduce((a,p)=>a+Object.values(p.tasks||{}).filter(Boolean).length,0);
+  const el=document.getElementById('tasks-prog'),bar=document.getElementById('tasks-bar');
+  if(el)el.textContent=done+'/'+total;
+  if(bar)bar.style.width=total>0?(done/total*100)+'%':'0%';
+  if(total>0&&done>=total&&isHost)stRef.child('winner').set('crewmates_tasks');
+}
+
+function doTask(tid){
+  if(myTasks[tid])return;
+  myTasks[tid]=true;
+  pRef.child(myId+'/tasks/'+tid).set(true);
+  renderTasksTab();
+  toast("✅ Mission validée!","#27ae60");
+}
+
+function doSab(sid){
+  const sab=SABOTAGES.find(s=>s.id===sid);if(!sab)return;
+  SABOTAGES.forEach(s=>{const b=document.getElementById('sab-'+s.id);if(b)b.disabled=true;});
+  stRef.child('sabotage').set({active:true,id:sab.id,name:sab.name,desc:sab.desc,duration:sab.duration,startTime:Date.now()});
+  toast("⚠️ "+sab.name+"!");
+  setTimeout(()=>{stRef.child('sabotage').set({active:false});SABOTAGES.forEach(s=>{const b=document.getElementById('sab-'+s.id);if(b)b.disabled=false;});},sab.duration*1000);
+}
+function showSab(sab){
+  document.getElementById('sab-banner').style.display='block';
+  document.getElementById('sab-name').textContent='⚠️ '+sab.name;
+  document.getElementById('sab-desc').textContent=sab.desc;
+  clearInterval(sabInt);
+  let rem=Math.max(0,sab.duration-(Date.now()-sab.startTime)/1000);
+  const u=()=>{document.getElementById('sab-timer').textContent=Math.ceil(rem)+'s';if(rem<=0){clearInterval(sabInt);hideSab();}rem--;};
+  u();sabInt=setInterval(u,1000);
+}
+function hideSab(){document.getElementById('sab-banner').style.display='none';clearInterval(sabInt);}
+function startKillCd(){
+  killCd=120;clearInterval(killInt);
+  const btn=document.getElementById('kill-btn');if(btn)btn.disabled=true;
+  killInt=setInterval(()=>{
+    killCd--;
+    const d=document.getElementById('kcd'),b=document.getElementById('kill-btn');
+    if(d){d.textContent=killCd>0?fmt(killCd):'PRÊT 🔪';d.style.color=killCd>0?'#e74c3c':'#27ae60';}
+    if(b)b.disabled=killCd>0;
+    if(killCd<=0)clearInterval(killInt);
+  },1000);
+}
+
+function doKill(){
+  if(killCd>0){toast("Cooldown: "+fmt(killCd));return;}
+  const targets=players.filter(p=>p.id!==myId&&p.alive&&p.role==='crewmate');
+  if(!targets.length){toast("Aucun équipier à éliminer!");return;}
+  let html='<div style="position:fixed;inset:0;background:rgba(0,0,0,0.96);z-index:900;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px" id="kill-modal">'+
+    '<h3 style="color:#e74c3c;margin-bottom:5px;font-size:1.4rem">🔪 Qui veux-tu éliminer?</h3>'+
+    '<p style="color:#888;font-size:0.82rem;margin-bottom:20px">Assure-toi d\'être à côté en vrai!</p>';
+  targets.forEach(t=>{
+    html+='<div onclick="confirmKill(\''+t.id+'\')" style="display:flex;align-items:center;gap:12px;padding:16px 20px;background:#1e2d3d;border:2px solid #e74c3c;border-radius:12px;margin:6px 0;cursor:pointer;width:100%;max-width:300px">'+
+      '<div style="width:18px;height:18px;border-radius:50%;background:'+COLORS[t.color]+'"></div>'+
+      '<span style="font-size:1.1rem;font-weight:bold">'+t.name+'</span></div>';
+  });
+  html+='<button onclick="document.getElementById(\'kill-modal\').remove()" style="margin-top:20px;padding:12px 28px;background:#34495e;border:none;border-radius:12px;color:white;font-size:1rem;cursor:pointer">❌ Annuler</button></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+
+function confirmKill(tid){
+  const modal=document.getElementById('kill-modal');if(modal)modal.remove();
+  const t=players.find(p=>p.id===tid);if(!t)return;
+  pRef.child(tid).update({alive:false,rd:false});
+  toast("💀 "+t.name+" éliminé!");
+  startKillCd();
+  setTimeout(()=>{
+    pRef.once('value',snap=>{
+      const all=Object.values(snap.val()||{});
+      const ai=all.filter(p=>p.role==='impostor'&&p.alive).length;
+      const ac=all.filter(p=>p.role==='crewmate'&&p.alive).length;
+      if(isHost&&ai>=ac)stRef.child('winner').set('impostors');
+    });
+  },500);
+}
+
+function reportBody(){
+  if(isDead){toast("Les fantômes ne peuvent pas signaler!");return;}
+  const n=myName||"Quelqu'un";
+  const data={active:true,voteOn:false,isBody:true,reason:"🚨 "+n+" a trouvé un corps!",startTime:Date.now()};
+  stRef.child('meeting').set(data);
+  vRef.remove();myVote=null;meetingUp=true;
+  document.getElementById('fs-alert-icon').textContent='💀';
+  document.getElementById('fs-alert-reason').textContent=data.reason;
+  document.getElementById('fs-host-btn').style.display=isHost?'block':'none';
+  document.getElementById('fs-wait-msg').style.display=isHost?'none':'block';
+  document.getElementById('fs-alert').style.display='flex';
+  document.getElementById('fs-vote').style.display='none';
+  document.getElementById('fs-eject').style.display='none';
+}
+
+function callMeeting(){
+  if(isDead){toast("Les fantômes ne peuvent pas appeler de réunion!");return;}
+  const n=myName||"Quelqu'un";
+  const data={active:true,voteOn:false,isBody:false,reason:"📢 "+n+" a appelé une réunion d'urgence!",startTime:Date.now()};
+  stRef.child('meeting').set(data);
+  vRef.remove();myVote=null;meetingUp=true;
+  document.getElementById('fs-alert-icon').textContent='📢';
+  document.getElementById('fs-alert-reason').textContent=data.reason;
+  document.getElementById('fs-host-btn').style.display=isHost?'block':'none';
+  document.getElementById('fs-wait-msg').style.display=isHost?'none':'block';
+  document.getElementById('fs-alert').style.display='flex';
+  document.getElementById('fs-vote').style.display='none';
+  document.getElementById('fs-eject').style.display='none';
+}
+
+function hostLaunchVote(){
+  stRef.child('meeting/voteOn').set(true);
+  document.getElementById('fs-vote-reason').textContent=document.getElementById('fs-alert-reason').textContent;
+  document.getElementById('fs-alert').style.display='none';
+  document.getElementById('fs-vote').style.display='flex';
+  document.getElementById('fs-eject').style.display='none';
+  renderVoteList();startVoteTimer();
+}
+
+function startVoteTimer(){
+  clearInterval(voteInt);
+  let rem=300;
+  const u=()=>{
+    const el=document.getElementById('fs-vote-timer');
+    if(el){el.textContent=fmt(rem);el.style.color=rem<=60?'#e74c3c':'#f39c12';}
+    if(rem<=0){clearInterval(voteInt);toast("⏰ Temps écoulé!","#e74c3c");endVote();return;}
+    rem--;
+  };
+  u();voteInt=setInterval(u,1000);
+}
+
+function renderVoteList(){
+  const alive=players.filter(p=>p.alive);
+  document.getElementById('vote-list').innerHTML=alive.map(p=>
+    '<div class="vote-row" style="border-color:'+(myVote===p.id?'#8e44ad':'#2c3e50')+'">'+
+    '<div style="display:flex;align-items:center;gap:10px"><div class="dot" style="background:'+COLORS[p.color]+'"></div>'+
+    '<span style="font-weight:'+(p.id===myId?'bold':'normal')+'">'+p.name+(p.id===myId?' (Toi)':'')+'</span></div>'+
+    '<button onclick="castVote(\''+p.id+'\')" '+(myVote||isDead?'disabled':'')+
+    ' style="background:'+(myVote===p.id?'#e74c3c':'#8e44ad')+';border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:0.9rem;opacity:'+(myVote&&myVote!==p.id?0.3:1)+'">'+
+    (myVote===p.id?'✓ Voté':'Voter')+'</button></div>'
+  ).join('');
+}
+
+function castVote(tid){
+  if(isDead||myVote)return;
+  myVote=tid;
+  vRef.child(myId).set({voter:myId,target:tid,name:myName});
+  toast(tid==='skip'?'Vote passé!':'Vote enregistré!',"#27ae60");
+  renderVoteList();
+  const sb=document.getElementById('skip-btn');if(sb)sb.disabled=true;
+}
+
+function updateVoteUI(votes){
+  const alive=players.filter(p=>p.alive).length;
+  const total=Object.keys(votes).length;
+  const el=document.getElementById('vote-count');if(el)el.textContent=total+'/'+alive;
+  const tally={};Object.values(votes).forEach(v=>tally[v]=(tally[v]||0)+1);
+  const res=document.getElementById('vote-results');
+  if(res)res.innerHTML=Object.entries(tally).sort(([,a],[,b])=>b-a).map(([id,c])=>{
+    const p=players.find(x=>x.id===id);
+    return'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e2d3d;font-size:0.85rem"><span>'+(id==='skip'?'⏭ Passer':(p?p.name:id))+'</span><span style="color:#f39c12;font-weight:bold">'+c+'×</span></div>';
+  }).join('');
+}
+
+function endVote(){
+  clearInterval(voteInt);
+  vRef.once('value',snap=>{
+    const votes=snap.val()||{},tally={};
+    Object.values(votes).forEach(v=>tally[v]=(tally[v]||0)+1);
+    const skipV=tally['skip']||0;
+    let ejected=null,max=0;
+    Object.entries(tally).forEach(([id,c])=>{if(id!=='skip'&&c>max){max=c;ejected=id;}});
+    if(skipV>=max)ejected=null;
+    stRef.child('meeting').set({active:false,voteOn:false});
+    vRef.remove();myVote=null;meetingUp=false;
+    if(ejected){
+      const t=players.find(p=>p.id===ejected);
+      if(t){
+        pRef.child(ejected).update({alive:false,rd:true});
+        showEject(t);
+        setTimeout(()=>{
+          pRef.once('value',snap2=>{
+            const all=Object.values(snap2.val()||{});
+            const ai=all.filter(p=>p.role==='impostor'&&p.alive).length;
+            const ac=all.filter(p=>p.role==='crewmate'&&p.alive).length;
+            if(isHost){if(ai===0)stRef.child('winner').set('crewmates_vote');else if(ai>=ac)stRef.child('winner').set('impostors');}
+          });
+        },300);
+      }
+    } else showEject(null);
+  });
+}
+
+function showEject(ejected){
+  showFS('fs-eject');
+  if(ejected){
+    document.getElementById('ej-icon').textContent=ejected.role==='impostor'?'🔪':'👨‍🚀';
+    const n=document.getElementById('ej-name');n.textContent=ejected.name;n.style.color=ejected.role==='impostor'?'#e74c3c':'#3498db';
+    const r=document.getElementById('ej-role');r.textContent=ejected.role==='impostor'?"😈 C'était un IMPOSTEUR!":"😇 C'était un ÉQUIPIER...";r.style.color=ejected.role==='impostor'?'#e74c3c':'#3498db';
+    document.getElementById('ej-rem').textContent='Il reste '+players.filter(p=>p.alive&&p.id!==ejected.id&&p.role==='impostor').length+' imposteur(s) en jeu';
+  } else {
+    document.getElementById('ej-icon').textContent='🤷';
+    document.getElementById('ej-name').textContent='Aucune expulsion';
+    document.getElementById('ej-name').style.color='#aaa';
+    document.getElementById('ej-role').textContent='Majorité skip — partie continue!';
+    document.getElementById('ej-role').style.color='#aaa';
+    document.getElementById('ej-rem').textContent='';
+  }
+  let cd=5;document.getElementById('ej-cd').textContent=cd;
+  const iv=setInterval(()=>{cd--;document.getElementById('ej-cd').textContent=cd;if(cd<=0){clearInterval(iv);hideFS();showScreen('screen-game');}},1000);
+}
+
+function sendChat(){
+  const inp=document.getElementById('chat-input');const msg=inp.value.trim();
+  if(!msg||isDead)return;
+  cRef.push({sender:myName,color:myColor,msg,time:Date.now()});
+  inp.value='';
+}
+function addChat(data){
+  const box=document.getElementById('chat-box');if(!box)return;
+  const div=document.createElement('div');div.className='chat-msg';
+  div.innerHTML='<span style="font-weight:bold;color:'+COLORS[data.color]+'">'+data.sender+': </span><span style="color:#ddd">'+data.msg+'</span>';
+  box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+
+function showWinner(winner){
+  clearInterval(gameInt);hideFS();
+  const cw=winner.startsWith('crewmates');
+  document.getElementById('win-icon').textContent=cw?'👨‍🚀':'🔪';
+  document.getElementById('win-title').textContent=cw?'ÉQUIPIERS GAGNENT!':'IMPOSTEURS GAGNENT!';
+  document.getElementById('win-title').style.color=cw?'#3498db':'#e74c3c';
+  document.getElementById('win-sub').textContent=winner==='crewmates_tasks'?'🎉 Toutes les missions complétées!':winner==='crewmates_vote'?'✅ Tous les imposteurs expulsés!':winner==='impostors_timeout'?'⏰ Temps écoulé!':'😈 Les imposteurs ont pris le contrôle!';
+  document.getElementById('win-reveal').innerHTML=
+    '<p style="color:#aaa;font-weight:bold;margin-bottom:12px">🔪 Les imposteurs étaient:</p>'+
+    players.filter(p=>p.role==='impostor').map(p=>'<div class="player-row" style="background:#1a0505;border:1px solid #c0392b"><div class="dot" style="background:'+COLORS[p.color]+'"></div><span style="color:#e74c3c;font-weight:bold">'+p.name+' 🔪</span></div>').join('')+
+    '<p style="color:#aaa;font-weight:bold;margin:14px 0 8px">Résultats:</p>'+
+    players.map(p=>'<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #1e2d3d;font-size:0.85rem"><div style="display:flex;align-items:center;gap:8px"><div class="dot" style="width:10px;height:10px;background:'+COLORS[p.color]+'"></div><span style="color:'+(p.alive?'#fff':'#666')+';text-decoration:'+(p.alive?'none':'line-through')+'">'+p.name+'</span></div><span style="color:'+(p.role==='impostor'?'#e74c3c':'#3498db')+';font-size:0.78rem">'+(p.role==='impostor'?'Imposteur':'Équipier')+'</span></div>').join('');
+  showScreen('screen-winner');
+}
+
+function initMap(){
+  if(map)return;
+  map=L.map('map').setView([RES_LAT,RES_LNG],19);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+  L.circle([CAM.lat,CAM.lng],{radius:CAM.r,color:'#f39c12',fillColor:'#f39c12',fillOpacity:0.2,weight:2}).addTo(map);
+  L.marker([CAM.lat,CAM.lng],{icon:L.divIcon({html:'<div style="font-size:22px">📹</div>',className:'',iconSize:[24,24]})}).bindPopup('<b>Zone Caméra</b><br>Ici tu vois tous les joueurs!').addTo(map);
+  MAP_TASKS.forEach(t=>{L.marker([t.lat,t.lng],{icon:L.divIcon({html:'<div style="font-size:18px">📋</div>',className:'',iconSize:[24,24]})}).bindPopup('<b>'+t.name+'</b>').addTo(map);});
+}
+
+function startGPS(){
+  if(!navigator.geolocation)return;
+  navigator.geolocation.watchPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    if(myId){pRef.child(myId+'/lat').set(lat);pRef.child(myId+'/lng').set(lng);}
+    const d=getDist(lat,lng,CAM.lat,CAM.lng);
+    inCam=d<=CAM.r;
+    const s=document.getElementById('cam-status');
+    if(s){s.textContent=inCam?'📹 Zone caméra — tu vois tous les joueurs!':'📍 '+Math.round(d)+'m de la zone caméra';s.style.color=inCam?'#f39c12':'#7f8c8d';}
+    if(curTab==='map')updateMarkers();
+  },()=>{const s=document.getElementById('cam-status');if(s)s.textContent='⚠️ Active la localisation';},{enableHighAccuracy:true,maximumAge:3000,timeout:10000});
+}
+
+function updateMarkers(){
+  if(!map)return;
+  players.forEach(p=>{
+    if(!p.lat||!p.lng)return;
+    const see=inCam||myRole==='impostor'||p.id===myId;
+    if(!see){if(markers[p.id]){map.removeLayer(markers[p.id]);delete markers[p.id];}return;}
+    const icon=L.divIcon({html:'<div style="width:22px;height:22px;border-radius:50%;background:'+COLORS[p.color]+';border:2px solid white;opacity:'+(p.alive?1:0.4)+';display:flex;align-items:center;justify-content:center;font-size:10px;color:white;font-weight:bold">'+p.name.charAt(0)+'</div>',className:'',iconSize:[22,22]});
+    if(markers[p.id]){markers[p.id].setLatLng([p.lat,p.lng]);markers[p.id].setIcon(icon);}
+    else{markers[p.id]=L.marker([p.lat,p.lng],{icon}).bindPopup('<b>'+p.name+'</b>'+(p.alive?'':' (Mort)')).addTo(map);}
+  });
+}
+
+function swTab(tab){
+  ['tasks','players','actions','map'].forEach(t=>{
+    document.getElementById('ct-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  curTab=tab;
+  if(tab==='players')renderPlayersTab();
+  if(tab==='map'){setTimeout(()=>{initMap();if(map)map.invalidateSize();updateMarkers();},150);}
+}
+
+function swVTab(tab){
+  document.getElementById('vc-v').style.display=tab==='v'?'block':'none';
+  document.getElementById('vc-c').style.display=tab==='c'?'block':'none';
+  document.getElementById('vtab-v').classList.toggle('active',tab==='v');
+  document.getElementById('vtab-c').classList.toggle('active',tab==='c');
+}
+</script>
+</body>
+</html>
