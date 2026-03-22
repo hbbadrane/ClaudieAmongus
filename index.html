@@ -699,17 +699,15 @@ function endVote(){
       if(t){
         pRef.child(ejected).update({alive:false,rd:true});
         showEject(t);
-        setTimeout(()=>{
-          pRef.once('value',snap2=>{
-            const all=Object.values(snap2.val()||{});
-            const ai=all.filter(p=>p.role==='impostor'&&p.alive).length;
-            const ac=all.filter(p=>p.role==='crewmate'&&p.alive).length;
-            if(isHost){
-              if(ai===0)stRef.child('winner').set('crewmates_vote');
-              else if(ai>=ac)stRef.child('winner').set('impostors');
-            }
-          });
-        },300);
+       setTimeout(()=>{
+  pRef.once('value',snap2=>{
+    const all=Object.values(snap2.val()||{});
+    const ai=all.filter(p=>p.role==='impostor'&&p.alive).length;
+    const ac=all.filter(p=>p.role==='crewmate'&&p.alive).length;
+    if(ai===0){stRef.child('winner').set('crewmates_vote');}
+    else if(ai>=ac){stRef.child('winner').set('impostors');}
+  });
+},300);
       }
     } else {
       showEject(null);
