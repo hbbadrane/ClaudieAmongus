@@ -300,14 +300,16 @@ function openHost(){
   document.getElementById('game-link').textContent=window.location.href;
   showScreen('screen-host');
   listenGame();
-  pRef.on('value',snap=>{
-    const all=snap.val()||{};
-    const list=Object.values(all).filter(p=>!p.name||p.name!=='Hote');
-    document.getElementById('lobby-list').innerHTML=
-      '<p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Joueurs connectés ('+list.length+')</p>'+
-      (list.length===0?'<p style="color:#555;font-size:0.85rem;text-align:center">En attente de joueurs...</p>':
-      list.map(p=>'<div class="player-row"><div class="dot" style="background:'+COLORS[p.color]+'"></div><span>'+p.name+'</span></div>').join(''));
-  });
+  setInterval(()=>{
+    pRef.once('value',snap=>{
+      const all=snap.val()||{};
+      const list=Object.values(all).filter(p=>p.name&&p.name!=='Hote');
+      document.getElementById('lobby-list').innerHTML=
+        '<p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Joueurs connectés ('+list.length+')</p>'+
+        (list.length===0?'<p style="color:#555;font-size:0.85rem;text-align:center">En attente de joueurs...</p>':
+        list.map(p=>'<div class="player-row"><div class="dot" style="background:'+COLORS[p.color]+'"></div><span>'+p.name+'</span></div>').join(''));
+    });
+  },2000);
 }
 
 function startGame(){
