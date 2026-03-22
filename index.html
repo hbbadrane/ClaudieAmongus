@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Among Us IRL 🚀</title>
+<title>Among Us IRL</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -14,18 +14,15 @@ body{background:#0d1117;color:#fff;min-height:100vh}
 .screen{display:none;flex-direction:column;align-items:center;padding:20px;min-height:100vh;max-width:400px;margin:0 auto}
 .screen.active{display:flex}
 .btn{width:100%;padding:14px;margin:5px 0;border:none;border-radius:12px;font-size:1rem;font-weight:bold;cursor:pointer;transition:all 0.2s}
-.btn-blue{background:#2980b9;color:#fff}
-.btn-green{background:#27ae60;color:#fff}
-.btn-red{background:#e74c3c;color:#fff}
-.btn-orange{background:#e67e22;color:#000}
-.btn-gray{background:#34495e;color:#fff}
-.btn:disabled{opacity:0.4;cursor:not-allowed}
+.btn-blue{background:#2980b9;color:#fff}.btn-green{background:#27ae60;color:#fff}
+.btn-red{background:#e74c3c;color:#fff}.btn-orange{background:#e67e22;color:#000}
+.btn-gray{background:#34495e;color:#fff}.btn:disabled{opacity:0.4;cursor:not-allowed}
 .card{background:#1a2332;border-radius:16px;padding:20px;width:100%;margin:8px 0;border:1px solid #2c3e50}
 input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px solid #34495e;background:#1a2332;color:#fff;font-size:1rem;outline:none}
 .tab-bar{display:flex;width:100%;background:#1a2332;border-radius:12px;padding:4px;margin:8px 0}
 .tab{flex:1;padding:8px 2px;text-align:center;border-radius:8px;cursor:pointer;font-size:0.75rem;color:#888;transition:all 0.2s}
 .tab.active{background:#2980b9;color:#fff;font-weight:bold}
-.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#e74c3c;color:#fff;padding:12px 22px;border-radius:12px;font-weight:bold;z-index:9999;font-size:0.9rem;box-shadow:0 4px 20px rgba(0,0,0,0.5);display:none;white-space:nowrap}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#e74c3c;color:#fff;padding:12px 22px;border-radius:12px;font-weight:bold;z-index:9999;font-size:0.9rem;display:none;white-space:nowrap}
 .player-row{display:flex;align-items:center;padding:10px 12px;background:#1e2d3d;border-radius:10px;margin:4px 0}
 .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-right:10px}
 .task-item{background:#1e2d3d;border-radius:12px;padding:14px;margin:6px 0;display:flex;gap:12px;align-items:flex-start;border:1px solid #2c3e50;transition:all 0.2s}
@@ -48,14 +45,12 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
 </head>
 <body>
 <div class="toast" id="toast"></div>
-
 <div class="overlay" id="dead-overlay">
   <div style="font-size:5rem">💀</div>
   <h2 style="color:#e74c3c;margin:15px 0">Tu as été éliminé!</h2>
-  <p style="color:#aaa;margin-bottom:24px;line-height:1.7">Tu es maintenant un fantôme.</p>
+  <p style="color:#aaa;margin-bottom:24px">Tu es maintenant un fantôme.</p>
   <button class="btn btn-gray" onclick="document.getElementById('dead-overlay').style.display='none'">Continuer comme Fantôme 👻</button>
 </div>
-
 <div class="fs" id="fs-alert">
   <div style="font-size:5rem;margin-bottom:10px;animation:pulse 1s infinite" id="fs-alert-icon">🚨</div>
   <h1 style="color:#e74c3c;font-size:2rem;margin-bottom:10px;animation:blink 1s infinite">RÉUNION D'URGENCE!</h1>
@@ -66,12 +61,11 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     <p style="color:#f39c12;font-size:1.1rem;margin-top:6px">pour le Vote!</p>
   </div>
   <div id="fs-host-btn" style="display:none;width:100%;max-width:320px">
-    <p style="color:#7f8c8d;font-size:0.82rem;margin-bottom:8px">Tu es l'hôte — lance le vote quand tout le monde est arrivé</p>
+    <p style="color:#7f8c8d;font-size:0.82rem;margin-bottom:8px">Lance le vote quand tout le monde est là</p>
     <button class="btn btn-green" onclick="hostLaunchVote()">✅ Tout le monde est là — Lancer le Vote!</button>
   </div>
   <p id="fs-wait-msg" style="color:#7f8c8d;font-size:0.85rem;display:none">En attente que l'hôte lance le vote...</p>
 </div>
-
 <div class="fs" id="fs-vote" style="justify-content:flex-start;padding-top:15px">
   <div style="width:100%;max-width:380px">
     <div style="text-align:center;margin-bottom:10px">
@@ -105,7 +99,6 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     </div>
   </div>
 </div>
-
 <div class="fs" id="fs-eject">
   <div style="font-size:5rem;margin-bottom:15px" id="ej-icon"></div>
   <h2 style="font-size:2rem;font-weight:bold;margin-bottom:10px" id="ej-name"></h2>
@@ -116,7 +109,6 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     <div style="font-size:3rem;font-weight:bold;color:#f39c12" id="ej-cd">5</div>
   </div>
 </div>
-
 <div class="screen active" id="screen-join">
   <div style="text-align:center;margin-top:40px;margin-bottom:15px">
     <div style="font-size:3.5rem">🚀</div>
@@ -142,7 +134,6 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     <button class="btn btn-orange" onclick="openHost()">👑 Mode Hôte</button>
   </div>
 </div>
-
 <div class="screen" id="screen-host">
   <div style="text-align:center;margin:20px 0 10px">
     <h2 style="color:#f39c12;font-size:1.5rem">👑 Configuration Hôte</h2>
@@ -172,7 +163,6 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
   <button class="btn btn-red" onclick="startGame()">🚀 Lancer la partie!</button>
   <button class="btn btn-gray" onclick="showScreen('screen-join')">← Retour</button>
 </div>
-
 <div class="screen" id="screen-waiting">
   <div style="text-align:center;margin-top:80px">
     <div style="font-size:4rem;margin-bottom:15px">⏳</div>
@@ -184,7 +174,6 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     <p style="color:#7f8c8d">L'hôte va lancer la partie! 📢</p>
   </div>
 </div>
-
 <div class="screen" id="screen-role">
   <div style="text-align:center;margin-top:30px;margin-bottom:15px">
     <h2 style="color:#f39c12">Ton Rôle Secret</h2>
@@ -196,7 +185,6 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     <button class="btn btn-green" onclick="goToGame()">✅ Compris — Jouer!</button>
   </div>
 </div>
-
 <div class="screen" id="screen-game">
   <div style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e2d3d;margin-bottom:8px">
     <div style="display:flex;align-items:center;gap:8px">
@@ -232,7 +220,6 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     <div id="cam-status" style="text-align:center;padding:8px;font-size:0.82rem;color:#7f8c8d"></div>
   </div>
 </div>
-
 <div class="screen" id="screen-winner">
   <div style="text-align:center;padding-top:50px;width:100%">
     <div style="font-size:7rem;margin-bottom:10px" id="win-icon"></div>
@@ -254,7 +241,6 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
-
 const COLORS=["#c51111","#132ed1","#117f2d","#ed54ba","#ef7d0e","#f5f557","#3f474e","#d6e0f0","#6b31bc","#71491e","#38fedc","#50ef39"];
 const TASKS=[
   {id:"t1",name:"💧 Transfert Instable",location:"Cuisine",desc:"Transporte l'eau d'un gobelet à un autre avec une cuillère sans renverser. Tu as 3 tentatives!"},
@@ -276,23 +262,18 @@ const MAP_TASKS=[
   {lat:RES_LAT-0.00008,lng:RES_LNG+0.00005,name:"🔍 Salle Commune"},
   {lat:RES_LAT+0.00003,lng:RES_LNG-0.00015,name:"🗺️ Bâtiment"},
 ];
-
 let myId=null,myName="",myColor=0,myRole=null,myTasks={};
 let isDead=false,isHost=false,myVote=null,curTab="tasks";
 let gameInt=null,sabInt=null,killInt=null,voteInt=null;
 let killCd=0,players=[];
-let map=null,markers={},inCam=false;
-let meetingUp=false;
-
+let map=null,markers={},inCam=false,meetingUp=false;
 const pRef=db.ref("game/players");
 const stRef=db.ref("game/state");
 const vRef=db.ref("game/votes");
 const cRef=db.ref("game/chat");
-
 const gId=()=>Math.random().toString(36).substr(2,9);
 const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
 const getDist=(a,b,c,d)=>{const R=6371000,dL=(c-a)*Math.PI/180,dO=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));};
-
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function showFS(id){['fs-alert','fs-vote','fs-eject'].forEach(s=>document.getElementById(s).style.display='none');document.getElementById(id).style.display='flex';}
 function hideFS(){['fs-alert','fs-vote','fs-eject'].forEach(s=>document.getElementById(s).style.display='none');}
@@ -313,15 +294,17 @@ function joinGame(){
 
 function openHost(){
   isHost=true;
-  if(!myId){myId='host_'+gId();myName='Hote';myColor=0;}
+  myId='host_'+gId();
+  myName='Hote';
+  myColor=0;
   document.getElementById('game-link').textContent=window.location.href;
   showScreen('screen-host');
   listenGame();
   pRef.on('value',snap=>{
     const all=snap.val()||{};
-    const list=Object.values(all);
+    const list=Object.values(all).filter(p=>!p.name||p.name!=='Hote');
     document.getElementById('lobby-list').innerHTML=
-      '<p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Joueurs connectes ('+list.length+')</p>'+
+      '<p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Joueurs connectés ('+list.length+')</p>'+
       (list.length===0?'<p style="color:#555;font-size:0.85rem;text-align:center">En attente de joueurs...</p>':
       list.map(p=>'<div class="player-row"><div class="dot" style="background:'+COLORS[p.color]+'"></div><span>'+p.name+'</span></div>').join(''));
   });
@@ -330,8 +313,8 @@ function openHost(){
 function startGame(){
   pRef.once('value',snap=>{
     const all=snap.val()||{};
-    const ids=Object.keys(all);
-    if(ids.length<1){toast("Minimum 1 joueur connecte!");return;}
+    const ids=Object.keys(all).filter(id=>!id.startsWith('host_'));
+    if(ids.length<1){toast("Minimum 1 joueur connecté!");return;}
     const ic=Math.min(parseInt(document.getElementById('imp-count').value),Math.max(1,Math.floor(ids.length/2)));
     const dur=parseInt(document.getElementById('duration').value);
     const sh=[...ids].sort(()=>Math.random()-0.5);
@@ -346,27 +329,28 @@ function startGame(){
     });
     pRef.set(upd);
     stRef.set({status:'playing',startTime:Date.now(),duration:dur*60,sabotage:null,meeting:null,winner:null});
-    toast("Partie lancee! Roles assignes.","#27ae60");
-    const myData=upd[myId];
-    if(myData){myRole=myData.role;myTasks=myData.tasks||{};showRoleReveal();}
-    else{myRole='crewmate';myTasks={};showScreen('screen-game');initGame();}
+    toast("Partie lancée! Rôles assignés.","#27ae60");
+    myRole='host';
+    showScreen('screen-game');
+    initGame();
   });
 }
 
 function listenGame(){
   if(!myId)return;
-  pRef.child(myId).on('value',snap=>{
-    const me=snap.val();if(!me)return;
-    if(me.role&&myRole!==me.role){
-      myRole=me.role;myTasks=me.tasks||{};
-      if(document.getElementById('screen-waiting').classList.contains('active')||
-         document.getElementById('screen-host').classList.contains('active'))showRoleReveal();
-    }
-    if(me.tasks)myTasks=me.tasks;
-    if(me.alive===false&&!isDead){isDead=true;document.getElementById('dead-overlay').style.display='flex';}
-  });
+  if(!myId.startsWith('host_')){
+    pRef.child(myId).on('value',snap=>{
+      const me=snap.val();if(!me)return;
+      if(me.role&&myRole!==me.role){
+        myRole=me.role;myTasks=me.tasks||{};
+        if(document.getElementById('screen-waiting').classList.contains('active'))showRoleReveal();
+      }
+      if(me.tasks)myTasks=me.tasks;
+      if(me.alive===false&&!isDead){isDead=true;document.getElementById('dead-overlay').style.display='flex';}
+    });
+  }
   pRef.on('value',snap=>{
-    players=Object.entries(snap.val()||{}).map(([id,p])=>({...p,id}));
+    players=Object.entries(snap.val()||{}).filter(([id])=>!id.startsWith('host_')).map(([id,p])=>({...p,id}));
     renderPlayersTab();updateProgress();
     if(document.getElementById('screen-game').classList.contains('active'))renderTasksTab();
     if(curTab==='map')updateMarkers();
@@ -429,8 +413,9 @@ function initGame(){
   document.getElementById('game-name').textContent=myName;
   document.getElementById('game-dot').style.background=COLORS[myColor];
   const b=document.getElementById('game-badge');
-  b.textContent=myRole==='impostor'?'IMPOSTEUR':'ÉQUIPIER';
-  b.style.background=myRole==='impostor'?'#c0392b':'#2980b9';
+  if(myRole==='host'){b.textContent='HÔTE';b.style.background='#f39c12';}
+  else if(myRole==='impostor'){b.textContent='IMPOSTEUR';b.style.background='#c0392b';}
+  else{b.textContent='ÉQUIPIER';b.style.background='#2980b9';}
   renderTasksTab();renderActionsTab();
   if(myRole==='impostor')startKillCd();
   startGPS();
@@ -441,6 +426,8 @@ function renderTasksTab(){
   let html='';
   if(myRole==='impostor'){
     html='<div class="card" style="text-align:center;background:linear-gradient(135deg,#2a0505,#1a0a0a);border:2px solid #922b21"><div style="font-size:2.5rem;margin-bottom:8px">🔪</div><p style="color:#e74c3c;font-weight:bold">Tu es l\'IMPOSTEUR</p><p style="color:#888;font-size:0.82rem;margin-top:6px">Fais semblant de faire des missions 🎭</p></div>';
+  } else if(myRole==='host'){
+    html='<div class="card" style="text-align:center"><div style="font-size:2.5rem;margin-bottom:8px">👑</div><p style="color:#f39c12;font-weight:bold">Tu es l\'HÔTE</p><p style="color:#888;font-size:0.82rem;margin-top:6px">Tu gères la partie depuis cet écran</p></div>';
   } else {
     const keys=Object.keys(myTasks);
     if(keys.length===0){html='<div class="card" style="text-align:center"><p style="color:#aaa">Chargement des missions...</p></div>';}
@@ -468,17 +455,16 @@ function renderActionsTab(){
     SABOTAGES.forEach(s=>{html+='<button class="btn btn-red" id="sab-'+s.id+'" onclick="doSab(\''+s.id+'\')" style="text-align:left;margin-bottom:6px;border:1px solid #c0392b"><div>'+s.name+'</div><div style="font-size:0.75rem;font-weight:normal;color:#ffaaaa;margin-top:2px">'+s.desc.slice(0,50)+'...</div></button>';});
     html+='<div class="card" style="text-align:center;margin-top:12px;border:1px solid #922b21">'+
       '<p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Kill cooldown: <b id="kcd" style="color:#27ae60">PRÊT 🔪</b></p>'+
-      '<button class="btn btn-red" id="kill-btn" onclick="doKill()">🔪 Choisir un joueur à éliminer</button>'+
-      '<p style="color:#555;font-size:0.72rem;margin-top:6px">Approche-toi physiquement avant!</p></div>';
+      '<button class="btn btn-red" id="kill-btn" onclick="doKill()">🔪 Choisir un joueur à éliminer</button></div>';
     el.innerHTML=html;
   } else {
-    el.innerHTML='<div class="card" style="text-align:center"><div style="font-size:3rem;margin-bottom:10px">👨‍🚀</div><p style="color:#aaa">Pas d\'actions spéciales pour les équipiers.</p></div>';
+    el.innerHTML='<div class="card" style="text-align:center"><div style="font-size:3rem;margin-bottom:10px">👨‍🚀</div><p style="color:#aaa">Pas d\'actions spéciales.</p></div>';
   }
 }
 
 function renderPlayersTab(){
   const el=document.getElementById('ct-players');if(!el)return;
-  const getA=p=>{if(myRole==='impostor')return p.alive;if(p.id===myId)return p.alive;return p.rd?false:true;};
+  const getA=p=>{if(myRole==='impostor'||myRole==='host')return p.alive;if(p.id===myId)return p.alive;return p.rd?false:true;};
   const alive=players.filter(p=>getA(p)).length;
   const dead=players.filter(p=>!getA(p)).length;
   let html='<div style="display:flex;justify-content:center;gap:20px;margin-bottom:12px"><span style="color:#27ae60;font-size:0.85rem">✅ '+alive+' en vie</span><span style="color:#e74c3c;font-size:0.85rem">💀 '+dead+' mort'+(dead>1?'s':'')+'</span></div>';
@@ -488,7 +474,7 @@ function renderPlayersTab(){
     const tt=Object.keys(p.tasks||{}).length;
     html+='<div class="player-row" style="opacity:'+(a?1:0.45)+'"><div class="dot" style="background:'+COLORS[p.color]+'"></div>'+
       '<span style="flex:1;text-decoration:'+(a?'none':'line-through')+';color:'+(a?'#fff':'#666')+'">'+p.name+(isMe?' (Toi)':'')+(a?'':' 💀')+'</span>'+
-      (myRole==='impostor'&&p.role==='impostor'&&!isMe?'<span style="color:#e74c3c;font-size:0.75rem">🔪</span>':'')+
+      ((myRole==='impostor'||myRole==='host')&&p.role==='impostor'&&!isMe?'<span style="color:#e74c3c;font-size:0.75rem">🔪</span>':'')+
       '<span style="color:#555;font-size:0.72rem;margin-left:8px">'+td+'/'+tt+'</span></div>';
   });
   el.innerHTML=html;
@@ -565,7 +551,7 @@ function confirmKill(tid){
   startKillCd();
   setTimeout(()=>{
     pRef.once('value',snap=>{
-      const all=Object.values(snap.val()||{});
+      const all=Object.values(snap.val()||{}).filter(p=>!p.name||p.name!=='Hote');
       const ai=all.filter(p=>p.role==='impostor'&&p.alive).length;
       const ac=all.filter(p=>p.role==='crewmate'&&p.alive).length;
       if(isHost&&ai>=ac)stRef.child('winner').set('impostors');
@@ -675,7 +661,7 @@ function endVote(){
         showEject(t);
         setTimeout(()=>{
           pRef.once('value',snap2=>{
-            const all=Object.values(snap2.val()||{});
+            const all=Object.values(snap2.val()||{}).filter(p=>!p.name||p.name!=='Hote');
             const ai=all.filter(p=>p.role==='impostor'&&p.alive).length;
             const ac=all.filter(p=>p.role==='crewmate'&&p.alive).length;
             if(isHost){if(ai===0)stRef.child('winner').set('crewmates_vote');else if(ai>=ac)stRef.child('winner').set('impostors');}
@@ -738,7 +724,7 @@ function initMap(){
   map=L.map('map').setView([RES_LAT,RES_LNG],19);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
   L.circle([CAM.lat,CAM.lng],{radius:CAM.r,color:'#f39c12',fillColor:'#f39c12',fillOpacity:0.2,weight:2}).addTo(map);
-  L.marker([CAM.lat,CAM.lng],{icon:L.divIcon({html:'<div style="font-size:22px">📹</div>',className:'',iconSize:[24,24]})}).bindPopup('<b>Zone Caméra</b><br>Ici tu vois tous les joueurs!').addTo(map);
+  L.marker([CAM.lat,CAM.lng],{icon:L.divIcon({html:'<div style="font-size:22px">📹</div>',className:'',iconSize:[24,24]})}).bindPopup('<b>Zone Caméra</b>').addTo(map);
   MAP_TASKS.forEach(t=>{L.marker([t.lat,t.lng],{icon:L.divIcon({html:'<div style="font-size:18px">📋</div>',className:'',iconSize:[24,24]})}).bindPopup('<b>'+t.name+'</b>').addTo(map);});
 }
 
@@ -746,7 +732,7 @@ function startGPS(){
   if(!navigator.geolocation)return;
   navigator.geolocation.watchPosition(pos=>{
     const lat=pos.coords.latitude,lng=pos.coords.longitude;
-    if(myId){pRef.child(myId+'/lat').set(lat);pRef.child(myId+'/lng').set(lng);}
+    if(myId&&!myId.startsWith('host_')){pRef.child(myId+'/lat').set(lat);pRef.child(myId+'/lng').set(lng);}
     const d=getDist(lat,lng,CAM.lat,CAM.lng);
     inCam=d<=CAM.r;
     const s=document.getElementById('cam-status');
@@ -759,7 +745,7 @@ function updateMarkers(){
   if(!map)return;
   players.forEach(p=>{
     if(!p.lat||!p.lng)return;
-    const see=inCam||myRole==='impostor'||p.id===myId;
+    const see=inCam||myRole==='impostor'||myRole==='host'||p.id===myId;
     if(!see){if(markers[p.id]){map.removeLayer(markers[p.id]);delete markers[p.id];}return;}
     const icon=L.divIcon({html:'<div style="width:22px;height:22px;border-radius:50%;background:'+COLORS[p.color]+';border:2px solid white;opacity:'+(p.alive?1:0.4)+';display:flex;align-items:center;justify-content:center;font-size:10px;color:white;font-weight:bold">'+p.name.charAt(0)+'</div>',className:'',iconSize:[22,22]});
     if(markers[p.id]){markers[p.id].setLatLng([p.lat,p.lng]);markers[p.id].setIcon(icon);}
