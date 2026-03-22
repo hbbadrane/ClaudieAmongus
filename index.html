@@ -294,17 +294,20 @@ function joinGame(){
 
 function openHost(){
   isHost=true;
-  myId='host_'+gId();
   const hostName=prompt("Entre ton nom de joueur:");
-myName=hostName||'Hote';
-  myColor=0;
+  if(!hostName){toast("Entre ton nom!");return;}
+  myName=hostName;
+  myColor=parseInt(prompt("Choisis ta couleur (0=Rouge, 1=Bleu, 2=Vert, 3=Rose, 4=Orange)")||"0");
+  myId=gId();
+  pRef.child(myId).set({name:myName,color:myColor,role:null,alive:true,rd:false,tasks:{},lat:RES_LAT,lng:RES_LNG});
+  pRef.child(myId).onDisconnect().remove();
   document.getElementById('game-link').textContent=window.location.href;
   showScreen('screen-host');
   listenGame();
   setInterval(()=>{
     pRef.once('value',snap=>{
       const all=snap.val()||{};
-      const list=Object.values(all).filter(p=>p.name&&p.name!=='Hote');
+      const list=Object.values(all);
       document.getElementById('lobby-list').innerHTML=
         '<p style="color:#aaa;font-size:0.85rem;margin-bottom:8px">Joueurs connectés ('+list.length+')</p>'+
         (list.length===0?'<p style="color:#555;font-size:0.85rem;text-align:center">En attente de joueurs...</p>':
@@ -317,7 +320,7 @@ function startGame(){
   pRef.once('value',snap=>{
     const all=snap.val()||{};
     const ids=Object.keys(all);
-    if(ids.length<1){toast("Minimum 1 joueur connecté!");return;}
+    if(ids.length<2){toast("Minimum 2 joueurs connectés!");return;}
     const ic=Math.min(parseInt(document.getElementById('imp-count').value),Math.max(1,Math.floor(ids.length/2)));
     const dur=parseInt(document.getElementById('duration').value);
     const sh=[...ids].sort(()=>Math.random()-0.5);
@@ -333,9 +336,6 @@ function startGame(){
     pRef.set(upd);
     stRef.set({status:'playing',startTime:Date.now(),duration:dur*60,sabotage:null,meeting:null,winner:null});
     toast("Partie lancée! Rôles assignés.","#27ae60");
-    myRole='host';
-    showScreen('screen-game');
-    initGame();
   });
 }
 
@@ -638,13 +638,17 @@ function updateVoteUI(votes){
   const alive=players.filter(p=>p.alive).length;
   const total=Object.keys(votes).length;
   const el=document.getElementById('vote-count');if(el)el.textContent=total+'/'+alive;
-  const tally={};Object.values(votes).forEach(v=>tally[v]=(tally[v]||0)+1);
+  const tally={};
+  Object.values(votes).forEach(v=>{
+    const target=typeof v==='object'?v.target:v;
+    tally[target]=(tally[target]||0)+1;
+  });
   const res=document.getElementById('vote-results');
   if(res)res.innerHTML=Object.entries(tally).sort(([,a],[,b])=>b-a).map(([id,c])=>{
     const p=players.find(x=>x.id===id);
     return'<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e2d3d;font-size:0.85rem"><span>'+(id==='skip'?'⏭ Passer':(p?p.name:id))+'</span><span style="color:#f39c12;font-weight:bold">'+c+'×</span></div>';
   }).join('');
-  if(total>=alive){clearInterval(voteInt);endVote();}
+  if(total>=alive){clearInterval(voteInt);setTimeout(endVote,1000);}
 }
 
 function endVote(){
