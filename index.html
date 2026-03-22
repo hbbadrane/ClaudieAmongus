@@ -333,7 +333,7 @@ function startGame(){
     const all=snap.val()||{};
     const ids=Object.keys(all);
     if(ids.length<2){toast("Minimum 2 joueurs connectés!");return;}
-    const ic=Math.min(parseInt(document.getElementById('imp-count').value),Math.max(1,Math.floor(ids.length/2)));
+    const ic=parseInt(document.getElementById('imp-count').value);
     const dur=parseInt(document.getElementById('duration').value);
     const sh=[...ids].sort(()=>Math.random()-0.5);
     const impIds=new Set(sh.slice(0,ic));
