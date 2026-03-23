@@ -243,10 +243,10 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 const COLORS=["#c51111","#132ed1","#117f2d","#ed54ba","#ef7d0e","#f5f557","#3f474e","#d6e0f0","#6b31bc","#71491e","#38fedc","#50ef39"];
 const TASKS=[
-  {id:"t1",name:"💧 Transfert Instable",location:"Cuisine",desc:"Transporte l'eau d'un gobelet à un autre avec une cuillère sans renverser. Tu as 3 tentatives!"},
-  {id:"t2",name:"🥄 Transport Sécurisé",location:"Couloir Principal",desc:"Amène une balle jusqu'à l'arrivée avec une cuillère sans la faire tomber. Demande le matériel à l'hôte!"},
-  {id:"t3",name:"🔍 Code Caché",location:"Salle Commune",desc:"Trouve les indices cachés dans la pièce et reconstitue le bon code. Montre le code à l'hôte pour valider!"},
-  {id:"t4",name:"🗺️ Parcours Codé",location:"Bâtiment",desc:"Suis les flèches dans le bâtiment jusqu'au point final pour récupérer le code. Montre le code à l'hôte!"},
+  {id:"t1",name:"💧 Transfert Instable",location:"Cuisine Bat G",desc:"Transporte l'eau d'un gobelet à un autre avec une cuillère sans renverser. Tu as 3 tentatives! Une personne à la fois. 📍 À côté de la cuisine Bat G"},
+  {id:"t2",name:"🥄 Transport Sécurisé",location:"Local Poubelle Bat A",desc:"Amène une balle jusqu'à l'arrivée avec une cuillère sans la faire tomber. Une personne à la fois. 📍 Derrière Bat A côté local poubelle"},
+  {id:"t3",name:"🎯 Lancer Précis",location:"Bat F",desc:"Lance 3 boulettes de papier dans une corbeille à 3 mètres. Tu as besoin de 2 réussites sur 3 pour valider. Une personne à la fois. 📍 Côté Bat F"},
+  {id:"t4",name:"🏓 Beer Pong",location:"Salle de Sport",desc:"Fais rentrer la balle dans 3 cups posés sur la table de ping pong. Tu as 10 essais pour y arriver. Une personne à la fois. 📍 Devant la salle de sport"},
 ];
 const SABOTAGES=[
   {id:"s1",name:"⚡ Coupure de Lumière",desc:"Tout le monde ferme les yeux et reste immobile 60 secondes!",duration:60},
