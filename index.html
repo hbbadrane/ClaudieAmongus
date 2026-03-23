@@ -556,9 +556,9 @@ function showSab(sab){
       const el=document.getElementById('sab-timer');
       if(el)el.textContent=Math.ceil(rem)+'s';
       if(rem<=0){
-        clearInterval(sabInt);
-        if(isHost)stRef.child('winner').set('impostors');
-      }
+  clearInterval(sabInt);
+  stRef.child('winner').set('impostors');
+}
       rem--;
     };
     u();sabInt=setInterval(u,1000);
