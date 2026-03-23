@@ -654,6 +654,8 @@ function reportBody(){
   const data={active:true,voteOn:false,isBody:true,reason:"🚨 "+n+" a trouvé un corps!",startTime:Date.now()};
   stRef.child('meeting').set(data);
   vRef.remove();myVote=null;meetingUp=true;
+  meetingUp=true;
+updateProgressUI();
   document.getElementById('tasks-progress-bar').style.display='block';
   document.getElementById('fs-alert-icon').textContent='💀';
   document.getElementById('fs-alert-reason').textContent=data.reason;
@@ -670,6 +672,8 @@ function callMeeting(){
   const data={active:true,voteOn:false,isBody:false,reason:"📢 "+n+" a appelé une réunion d'urgence!",startTime:Date.now()};
   stRef.child('meeting').set(data);
   vRef.remove();myVote=null;meetingUp=true;
+  meetingUp=true;
+updateProgressUI();
   document.getElementById('tasks-progress-bar').style.display='block';
   document.getElementById('fs-alert-icon').textContent='📢';
   document.getElementById('fs-alert-reason').textContent=data.reason;
