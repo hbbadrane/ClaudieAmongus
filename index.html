@@ -248,6 +248,7 @@ const TASKS=[
   {id:"t3",name:"🎯 Lancer Précis",location:"Bat F",desc:"Lance 3 boulettes de papier dans une corbeille à 3 mètres. 2 réussites sur 3 pour valider. Une personne à la fois. 📍 Côté Bat F"},
   {id:"t4",name:"🏓 Beer Pong",location:"Salle de Sport",desc:"Fais rentrer la balle dans 3 cups sur la table de ping pong. Tu as 5 essais. Une personne à la fois. 📍 Devant la salle de sport"},
   {id:"t5",name:"🧮 Calcul Express",location:"Sur ton téléphone",desc:"CALCUL_MISSION"},
+  {id:"t6",name:"🦢 Origami Express",location:"Salle TV",desc:"Suis les instructions collées au mur pour faire un origami en moins de 2 minutes. Prends une photo de ton origami terminé comme preuve! 📍 Salle TV"},
 ];
 const SABOTAGES=[
   {id:"s1",name:"⚡ Coupure de Lumière",desc:"Tout le monde ferme les yeux et reste immobile 60 secondes!",duration:60},
@@ -341,7 +342,7 @@ function startGame(){
     ids.forEach(id=>{
       const p=all[id];
       const role=impIds.has(id)?'impostor':'crewmate';
-      const tIds=[...TASKS].sort(()=>Math.random()-0.5).slice(0,2).map(t=>t.id);
+      const tIds=[...TASKS].sort(()=>Math.random()-0.5).slice(0,3).map(t=>t.id);
       const tObj={};tIds.forEach(tid=>tObj[tid]=false);
       upd[id]={name:p.name,color:p.color,role,alive:true,rd:false,
         tasks:role==='crewmate'?tObj:{},
