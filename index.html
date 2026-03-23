@@ -251,8 +251,7 @@ const TASKS=[
 const SABOTAGES=[
   {id:"s1",name:"⚡ Coupure de Lumière",desc:"Tout le monde ferme les yeux et reste immobile 60 secondes!",duration:60},
   {id:"s2",name:"📡 Comms Coupées",desc:"Interdiction de parler pendant 90 secondes — silence total!",duration:90},
-  {id:"s3",name:"🔒 Confinement",desc:"Tout le monde gèle et reste exactement là où il est pendant 2 minutes!",duration:120},
-  {id:"s4",name:"🚨 Fusion du Réacteur",desc:"Deux équipiers doivent rejoindre la Salle Commune en 3 minutes ou l'équipe perd!",duration:180},
+  {id:"s4",name:"🚨 Fusion du Réacteur",desc:"Deux joueurs doivent se retrouver devant la Salle Polyvalente pour arrêter le réacteur!",duration:180},
 ];
 const RES_LAT=45.7315666,RES_LNG=4.8806602;
 const CAM={lat:RES_LAT,lng:RES_LNG,r:15};
@@ -528,18 +527,51 @@ function doTask(tid){
 function doSab(sid){
   const sab=SABOTAGES.find(s=>s.id===sid);if(!sab)return;
   SABOTAGES.forEach(s=>{const b=document.getElementById('sab-'+s.id);if(b)b.disabled=true;});
-  stRef.child('sabotage').set({active:true,id:sab.id,name:sab.name,desc:sab.desc,duration:sab.duration,startTime:Date.now()});
+  stRef.child('sabotage').set({
+    active:true,id:sab.id,name:sab.name,desc:sab.desc,
+    duration:sab.duration,startTime:Date.now(),reactorCount:0
+  });
   toast("⚠️ "+sab.name+"!");
-  setTimeout(()=>{stRef.child('sabotage').set({active:false});SABOTAGES.forEach(s=>{const b=document.getElementById('sab-'+s.id);if(b)b.disabled=false;});},sab.duration*1000);
+  if(sab.id!=='s4'){
+    setTimeout(()=>{
+      stRef.child('sabotage').set({active:false});
+      SABOTAGES.forEach(s=>{const b=document.getElementById('sab-'+s.id);if(b)b.disabled=false;});
+    },sab.duration*1000);
+  }
 }
 function showSab(sab){
   document.getElementById('sab-banner').style.display='block';
   document.getElementById('sab-name').textContent='⚠️ '+sab.name;
   document.getElementById('sab-desc').textContent=sab.desc;
   clearInterval(sabInt);
-  let rem=Math.max(0,sab.duration-(Date.now()-sab.startTime)/1000);
-  const u=()=>{document.getElementById('sab-timer').textContent=Math.ceil(rem)+'s';if(rem<=0){clearInterval(sabInt);hideSab();}rem--;};
-  u();sabInt=setInterval(u,1000);
+  if(sab.id==='s4'){
+    const needed=2;
+    const current=sab.reactorCount||0;
+    document.getElementById('sab-timer').innerHTML=
+      '<div style="background:#1a0505;border:3px solid #e74c3c;border-radius:16px;padding:15px;text-align:center;margin-top:8px">'+
+      '<p style="color:#e74c3c;font-size:1rem;font-weight:bold;margin-bottom:8px">🚨 ALLEZ DEVANT LA</p>'+
+      '<p style="color:#fff;font-size:1.4rem;font-weight:bold;margin-bottom:8px">SALLE POLYVALENTE</p>'+
+      '<p style="color:#f39c12;font-size:0.85rem;margin-bottom:12px">'+current+'/'+needed+' joueurs arrivés</p>'+
+      '<button onclick="reactorArrive()" style="background:#27ae60;border:none;color:#fff;padding:12px 20px;border-radius:10px;font-size:1rem;font-weight:bold;cursor:pointer;width:100%">✅ Je suis devant la Salle Polyvalente!</button>'+
+      '</div>';
+    let rem=sab.duration-(Date.now()-sab.startTime)/1000;
+    const u=()=>{
+      rem--;
+      if(rem<=0){
+        clearInterval(sabInt);
+        if(isHost)stRef.child('winner').set('impostors');
+      }
+    };
+    sabInt=setInterval(u,1000);
+  } else {
+    let rem=Math.max(0,sab.duration-(Date.now()-sab.startTime)/1000);
+    const u=()=>{
+      document.getElementById('sab-timer').textContent=Math.ceil(rem)+'s';
+      if(rem<=0){clearInterval(sabInt);hideSab();}
+      rem--;
+    };
+    u();sabInt=setInterval(u,1000);
+  }
 }
 function hideSab(){document.getElementById('sab-banner').style.display='none';clearInterval(sabInt);}
 function startKillCd(){
@@ -833,7 +865,21 @@ function swVTab(tab){
   document.getElementById('vtab-v').classList.toggle('active',tab==='v');
   document.getElementById('vtab-c').classList.toggle('active',tab==='c');
 }
-
+function reactorArrive(){
+  stRef.child('sabotage').once('value',snap=>{
+    const sab=snap.val();if(!sab||!sab.active||sab.id!=='s4')return;
+    const newCount=(sab.reactorCount||0)+1;
+    if(newCount>=2){
+      stRef.child('sabotage').set({active:false});
+      SABOTAGES.forEach(s=>{const b=document.getElementById('sab-'+s.id);if(b)b.disabled=false;});
+      hideSab();
+      toast("✅ Réacteur arrêté! La partie continue!","#27ae60");
+    } else {
+      stRef.child('sabotage/reactorCount').set(newCount);
+      toast("1/2 joueurs arrivés — en attente du 2ème!","#f39c12");
+    }
+  });
+}
 function resetGame(){
   stRef.set({status:'lobby',winner:null,meeting:null,sabotage:null});
   pRef.remove();
@@ -850,6 +896,7 @@ function resetGame(){
   showScreen('screen-join');
   toast("Prêt pour une nouvelle partie 🎮","#27ae60");
 }
+  
 </script>
 </script>
 </body>
