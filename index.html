@@ -543,7 +543,7 @@ function showSab(sab){
 }
 function hideSab(){document.getElementById('sab-banner').style.display='none';clearInterval(sabInt);}
 function startKillCd(){
-  killCd=120;clearInterval(killInt);
+  killCd=60;clearInterval(killInt);
   const btn=document.getElementById('kill-btn');if(btn)btn.disabled=true;
   killInt=setInterval(()=>{
     killCd--;
