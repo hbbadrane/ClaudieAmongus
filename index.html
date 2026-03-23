@@ -837,16 +837,32 @@ function initMap(){
 }
 
 function startGPS(){
-  if(!navigator.geolocation)return;
+  if(!navigator.geolocation){
+    toast("GPS non disponible!");return;
+  }
+  const s=document.getElementById('cam-status');
+  if(s)s.textContent='📍 Activation GPS...';
   navigator.geolocation.watchPosition(pos=>{
     const lat=pos.coords.latitude,lng=pos.coords.longitude;
-    if(myId&&!myId.startsWith('host_')){pRef.child(myId+'/lat').set(lat);pRef.child(myId+'/lng').set(lng);}
+    if(myId){
+      pRef.child(myId+'/lat').set(lat);
+      pRef.child(myId+'/lng').set(lng);
+    }
     const d=getDist(lat,lng,CAM.lat,CAM.lng);
     inCam=d<=CAM.r;
-    const s=document.getElementById('cam-status');
-    if(s){s.textContent=inCam?'📹 Zone caméra — tu vois tous les joueurs!':'📍 '+Math.round(d)+'m de la zone caméra';s.style.color=inCam?'#f39c12':'#7f8c8d';}
-    if(curTab==='map')updateMarkers();
-  },()=>{const s=document.getElementById('cam-status');if(s)s.textContent='⚠️ Active la localisation';},{enableHighAccuracy:true,maximumAge:3000,timeout:10000});
+    if(s){
+      s.textContent=inCam?'📹 Zone caméra — tu vois tous les joueurs!':'📍 '+Math.round(d)+'m de la zone caméra';
+      s.style.color=inCam?'#f39c12':'#7f8c8d';
+    }
+    updateMarkers();
+    if(map&&myId){
+      const me=players.find(p=>p.id===myId);
+      if(me&&curTab==='map')map.setView([lat,lng],19);
+    }
+  },err=>{
+    if(s)s.textContent='⚠️ Active la localisation GPS!';
+    toast("⚠️ Active le GPS sur ton téléphone!","#e74c3c");
+  },{enableHighAccuracy:true,maximumAge:1000,timeout:10000});
 }
 
 function updateMarkers(){
