@@ -531,10 +531,15 @@ function updateProgress(){
   const crew=players.filter(p=>p.role==='crewmate');
   const total=crew.reduce((a,p)=>a+Object.keys(p.tasks||{}).length,0);
   const done=crew.reduce((a,p)=>a+Object.values(p.tasks||{}).filter(Boolean).length,0);
+  if(total>0&&done>=total&&isHost)stRef.child('winner').set('crewmates_tasks');
+}
+function updateProgressUI(){
+  const crew=players.filter(p=>p.role==='crewmate');
+  const total=crew.reduce((a,p)=>a+Object.keys(p.tasks||{}).length,0);
+  const done=crew.reduce((a,p)=>a+Object.values(p.tasks||{}).filter(Boolean).length,0);
   const el=document.getElementById('tasks-prog'),bar=document.getElementById('tasks-bar');
   if(el)el.textContent=done+'/'+total;
   if(bar)bar.style.width=total>0?(done/total*100)+'%':'0%';
-  if(total>0&&done>=total&&isHost)stRef.child('winner').set('crewmates_tasks');
 }
 
 function doTask(tid){
