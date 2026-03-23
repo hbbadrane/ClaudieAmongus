@@ -194,11 +194,13 @@ input,select{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:2px 
     </div>
     <span style="color:#f39c12;font-weight:bold" id="game-timer">30:00</span>
   </div>
-  <div style="width:100%;margin-bottom:8px">
-    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-      <span style="font-size:0.75rem;color:#888">Tâches équipe</span>
-      <span style="font-size:0.75rem;color:#27ae60;font-weight:bold" id="tasks-prog">0/0</span>
-    </div>
+  <div style="width:100%;margin-bottom:8px" id="tasks-progress-bar" style="display:none">
+  <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+    <span style="font-size:0.75rem;color:#888">Tâches équipe</span>
+    <span style="font-size:0.75rem;color:#27ae60;font-weight:bold" id="tasks-prog">0/0</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="tasks-bar" style="width:0%"></div></div>
+</div>
     <div class="progress-bar"><div class="progress-fill" id="tasks-bar" style="width:0%"></div></div>
   </div>
   <div class="sab-banner" id="sab-banner">
@@ -647,6 +649,7 @@ function reportBody(){
   const data={active:true,voteOn:false,isBody:true,reason:"🚨 "+n+" a trouvé un corps!",startTime:Date.now()};
   stRef.child('meeting').set(data);
   vRef.remove();myVote=null;meetingUp=true;
+  document.getElementById('tasks-progress-bar').style.display='block';
   document.getElementById('fs-alert-icon').textContent='💀';
   document.getElementById('fs-alert-reason').textContent=data.reason;
   document.getElementById('fs-host-btn').style.display=isHost?'block':'none';
@@ -662,6 +665,7 @@ function callMeeting(){
   const data={active:true,voteOn:false,isBody:false,reason:"📢 "+n+" a appelé une réunion d'urgence!",startTime:Date.now()};
   stRef.child('meeting').set(data);
   vRef.remove();myVote=null;meetingUp=true;
+  document.getElementById('tasks-progress-bar').style.display='block';
   document.getElementById('fs-alert-icon').textContent='📢';
   document.getElementById('fs-alert-reason').textContent=data.reason;
   document.getElementById('fs-host-btn').style.display=isHost?'block':'none';
@@ -994,6 +998,7 @@ function resetGame(){
   clearInterval(voteInt);
   clearInterval(sabInt);
   clearInterval(killInt);
+  document.getElementById('tasks-progress-bar').style.display='none';
   myId=null;myName="";myColor=0;myRole=null;myTasks={};
   isDead=false;isHost=false;myVote=null;curTab="tasks";
   gameInt=null;sabInt=null;killInt=null;voteInt=null;
