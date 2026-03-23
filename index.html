@@ -245,8 +245,9 @@ const COLORS=["#c51111","#132ed1","#117f2d","#ed54ba","#ef7d0e","#f5f557","#3f47
 const TASKS=[
   {id:"t1",name:"💧 Transfert Instable",location:"Cuisine Bat G",desc:"Transporte l'eau d'un gobelet à un autre avec une cuillère sans renverser. Tu as 3 tentatives! Une personne à la fois. 📍 À côté de la cuisine Bat G"},
   {id:"t2",name:"🥄 Transport Sécurisé",location:"Local Poubelle Bat A",desc:"Amène une balle jusqu'à l'arrivée avec une cuillère sans la faire tomber. Une personne à la fois. 📍 Derrière Bat A côté local poubelle"},
-  {id:"t3",name:"🎯 Lancer Précis",location:"Bat F",desc:"Lance 3 boulettes de papier dans une corbeille à 3 mètres. Tu as besoin de 2 réussites sur 3 pour valider. Une personne à la fois. 📍 Côté Bat F"},
-  {id:"t4",name:"🏓 Beer Pong",location:"Salle de Sport",desc:"Fais rentrer la balle dans 3 cups posés sur la table de ping pong. Tu as 10 essais pour y arriver. Une personne à la fois. 📍 Devant la salle de sport"},
+  {id:"t3",name:"🎯 Lancer Précis",location:"Bat F",desc:"Lance 3 boulettes de papier dans une corbeille à 3 mètres. 2 réussites sur 3 pour valider. Une personne à la fois. 📍 Côté Bat F"},
+  {id:"t4",name:"🏓 Beer Pong",location:"Salle de Sport",desc:"Fais rentrer la balle dans 3 cups sur la table de ping pong. Tu as 5 essais. Une personne à la fois. 📍 Devant la salle de sport"},
+  {id:"t5",name:"🧮 Calcul Express",location:"Sur ton téléphone",desc:"CALCUL_MISSION"},
 ];
 const SABOTAGES=[
   {id:"s1",name:"⚡ Coupure de Lumière",desc:"Tout le monde ferme les yeux et reste immobile 60 secondes!",duration:60},
@@ -460,6 +461,23 @@ function renderTasksTab(){
     else{keys.forEach(tid=>{
       const t=TASKS.find(x=>x.id===tid);if(!t)return;
       const done=myTasks[tid];
+      if(tid==='t5'&&!done){
+  html+='<div class="task-item" id="calc-task">'+
+    '<div style="flex:1">'+
+    '<div style="font-weight:bold;font-size:0.95rem;margin-bottom:4px">🧮 Calcul Express</div>'+
+    '<div style="color:#7f8c8d;font-size:0.75rem;margin-bottom:8px">📍 Sur ton téléphone</div>'+
+    '<div id="calc-zone" style="background:#0d1117;padding:12px;border-radius:10px">'+
+    '<div id="calc-eq" style="font-size:1.3rem;font-weight:bold;color:#f39c12;text-align:center;margin-bottom:8px"></div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+    '<span style="color:#aaa;font-size:0.82rem">⏱ <span id="calc-timer">90</span>s</span>'+
+    '<span style="color:#e74c3c;font-size:0.82rem">❤️ <span id="calc-lives">3</span> tentatives</span>'+
+    '</div>'+
+    '<input id="calc-input" type="number" placeholder="Ta réponse..." style="margin:0;margin-bottom:8px"/>'+
+    '<button onclick="submitCalc()" style="width:100%;padding:12px;background:#2980b9;border:none;border-radius:10px;color:#fff;font-weight:bold;font-size:1rem;cursor:pointer">✅ Valider</button>'+
+    '</div></div></div>';
+  setTimeout(startCalcMission,100);
+  return;
+}
       html+='<div class="task-item'+(done?' done':'')+'"><div class="task-check'+(done?' done':'')+'" onclick="'+(done?'':'doTask(\''+tid+'\')')+'">'+(done?'✓':'')+'</div>'+
         '<div style="flex:1"><div style="font-weight:bold;font-size:0.95rem;margin-bottom:4px">'+t.name+'</div>'+
         '<div style="color:#7f8c8d;font-size:0.75rem;margin-bottom:6px">📍 '+t.location+'</div>'+
@@ -879,6 +897,78 @@ function reactorArrive(){
       toast("1/2 joueurs arrivés — en attente du 2ème!","#f39c12");
     }
   });
+}
+  let calcAnswer=null,calcTimer=null,calcLives=3,calcSeconds=90;
+
+function genCalc(){
+  const ops=['+','×','÷'];
+  const op=ops[Math.floor(Math.random()*ops.length)];
+  let a,b,answer,eq;
+  if(op==='+'){
+    a=Math.floor(Math.random()*50)+10;
+    b=Math.floor(Math.random()*50)+10;
+    answer=a+b;
+    eq=a+' + '+b+' = ?';
+  } else if(op==='×'){
+    a=Math.floor(Math.random()*10)+2;
+    b=Math.floor(Math.random()*10)+2;
+    answer=a*b;
+    eq=a+' × '+b+' = ?';
+  } else {
+    b=Math.floor(Math.random()*9)+2;
+    answer=Math.floor(Math.random()*10)+2;
+    a=b*answer;
+    eq=a+' ÷ '+b+' = ?';
+  }
+  calcAnswer=answer;
+  const el=document.getElementById('calc-eq');
+  if(el)el.textContent=eq;
+}
+
+function startCalcMission(){
+  calcLives=3;calcSeconds=90;
+  genCalc();
+  clearInterval(calcTimer);
+  calcTimer=setInterval(()=>{
+    calcSeconds--;
+    const el=document.getElementById('calc-timer');
+    if(el)el.textContent=calcSeconds;
+    if(calcSeconds<=0){
+      clearInterval(calcTimer);
+      calcSeconds=90;
+      genCalc();
+      const el2=document.getElementById('calc-timer');
+      if(el2)el2.textContent=90;
+      toast("⏰ Temps écoulé! Nouvelle équation!","#e74c3c");
+    }
+  },1000);
+}
+
+function submitCalc(){
+  const input=document.getElementById('calc-input');
+  if(!input)return;
+  const val=parseInt(input.value);
+  input.value='';
+  if(val===calcAnswer){
+    clearInterval(calcTimer);
+    doTask('t5');
+    toast("🎉 Bravo! Calcul réussi!","#27ae60");
+  } else {
+    calcLives--;
+    const el=document.getElementById('calc-lives');
+    if(el)el.textContent=calcLives;
+    if(calcLives<=0){
+      calcLives=3;
+      calcSeconds=90;
+      genCalc();
+      const el2=document.getElementById('calc-timer');
+      if(el2)el2.textContent=90;
+      if(el)el.textContent=3;
+      toast("❌ 3 erreurs! Nouvelle équation!","#e74c3c");
+    } else {
+      toast("❌ Mauvaise réponse! "+calcLives+" tentative(s) restante(s)","#e74c3c");
+    }
+  }
 }
 function resetGame(){
   stRef.set({status:'lobby',winner:null,meeting:null,sabotage:null});
